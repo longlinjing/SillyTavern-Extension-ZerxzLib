@@ -14,18 +14,14 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.ts$/,
-                use: 'ts-loader',
-                exclude: /node_modules/,
-            },
-            {
-                test: /\.js/,
+                test: /\.[tj]s/,
                 exclude: /node_modules/,
                 options: {
                     cacheDirectory: true,
                     presets: [
                         '@babel/preset-env',
                         ['@babel/preset-react', { runtime: 'automatic' }],
+                        "@babel/preset-typescript"
                     ],
                 },
                 loader: 'babel-loader',
