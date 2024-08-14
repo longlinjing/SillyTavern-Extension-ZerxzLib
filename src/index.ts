@@ -1,7 +1,6 @@
 
 async function importFromScript(path: string) {
-    const root = "../../../../";
-    return await import(/* webpackIgnore: true */ root + path);
+    return await import(/* webpackIgnore: true */ "/" + path);
 }
 console.log("Hello from SillyTavern-Extension-ZerxzLib!")
 console.log("Importing from SillyTavern-Extension-ZerxzLib/src/index.ts")
