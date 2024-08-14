@@ -1,6 +1,11 @@
-
+const impotModule = new Map<string, any>();
 async function importFromScript(path: string) {
-    return await import(/* webpackIgnore: true */ "/" + path);
+    if (impotModule.has(path)) {
+        return impotModule.get(path);
+    }
+    const what =await  import(/* webpackIgnore: true */"/" + path)
+    impotModule.set(path, what);
+    return what;
 }
 console.log("Hello from SillyTavern-Extension-ZerxzLib!")
 console.log("Importing from SillyTavern-Extension-ZerxzLib/src/index.ts")
