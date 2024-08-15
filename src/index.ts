@@ -19,7 +19,7 @@ async function init() {
     console.log('init');
     const script = await importFromScript('script.js');
     console.log(script);
-    const { getContext } = await importFromScript('@silly-tavern/extensions') as { getContext: () => any };
+    const { getContext } = await importFromScript('script/extensions.js') as { getContext: () => any };
     console.log(getContext());
 }
 init();
