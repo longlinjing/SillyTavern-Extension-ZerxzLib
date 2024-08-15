@@ -9,6 +9,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 // const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 // const __dirname = path.dirname(__filename); // get the name of the directory
+const sillyTavern = path.join(__dirname, '../../../../..');
 module.exports = {
     experiments: {
         outputModule: true,
@@ -63,11 +64,12 @@ module.exports = {
         minimizer: [new TerserPlugin({ extractComments: false })],
     },
     externals: [(context, request, callback) => {
-        if (/^@silly-tavern/.test(request)) {
-            return callback(null, `../../../../../${request.replace('@silly-tavern/', '')}`);
-        }
         const dir = path.join(context, request);
         const basenameDir = path.basename(__dirname);
+        if (/^@silly-tavern/.test(request)) {
+            const script = (path.relative(context, sillyTavern) + '\\' + request.replace('@silly-tavern/', '')).replace(/\\/g, '/');
+            return callback(null, script);
+        }
         if (!dir.includes(basenameDir)) {
             console.log(`${dir} ${__dirname}`);
             const script = (path.relative(context, dir) + '\\' + path.basename(request) + '.js').replace(/\\/g, '/');
