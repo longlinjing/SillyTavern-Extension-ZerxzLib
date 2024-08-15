@@ -15,12 +15,11 @@ module.exports = {
     },
     target: 'browserslist',
     entry: {
-        index: path.join(__dirname, 'src/index.ts'),
+        'zerxz-lib': path.join(__dirname, 'src/index.ts'),
     },
     output: {
         filename: '[name].js',
         path: path.join(__dirname, 'dist/'),
-        chunkFilename: '[name].chunk.js',
         library: {
             // do not specify a `name` here
             type: 'module',
