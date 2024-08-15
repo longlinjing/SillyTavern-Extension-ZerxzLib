@@ -71,7 +71,7 @@ module.exports = {
         const basenameDir = path.basename(__dirname);
         if (!dir.includes(basenameDir)) {
             console.log(`${dir} ${__dirname}`);
-            const script = (path.relative(context, dir) + '\\' + path.basename(request) + '.js').replace(/\\/g, '/');
+            const script = ('..\\' + path.relative(context, dir) + '\\' + path.basename(request) + '.js').replace(/\\/g, '/');
             console.log(`${script}`);
             return callback(null, script);
         }
