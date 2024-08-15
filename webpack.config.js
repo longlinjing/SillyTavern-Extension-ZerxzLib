@@ -70,7 +70,9 @@ module.exports = {
         const dir = path.join(context, request);
         const basenameDir = path.basename(__dirname);
         if (!dir.includes(basenameDir)) {
-            return callback(null, request);
+            const script = (path.relative(path.join(__dirname, 'dist'), dir) + '\\' + path.basename(request) + '.js').replace(/\\/g, '/');
+            console.log(`${script}`);
+            return callback(null, script);
         }
         callback();
     }],
