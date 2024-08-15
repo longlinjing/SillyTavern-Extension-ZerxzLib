@@ -1,15 +1,13 @@
-
-// import path from 'node:path';
-// import TerserPlugin from 'terser-webpack-plugin';
-// import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
-// import { fileURLToPath } from 'node:url';
-// import ESLintWebpackPlugin from 'eslint-webpack-plugin';
+/* eslint-disable @typescript-eslint/no-var-requires */
 const path = require('node:path');
+const fs = require('node:fs');
 const TerserPlugin = require('terser-webpack-plugin');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
-// const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
-// const __dirname = path.dirname(__filename); // get the name of the directory
-const sillyTavern = path.join(__dirname, '../../../../..');
+const sillyTavern = __dirname.substring(0, __dirname.lastIndexOf('public') + 6);
+const manifest = require(path.join(__dirname, 'manifest.json'));
+let { js:scriptFilepath } = manifest;
+scriptFilepath = path.dirname(path.join(__dirname, scriptFilepath));
+const relativePath = path.relative(scriptFilepath, sillyTavern );
 module.exports = {
     experiments: {
         outputModule: true,
@@ -63,18 +61,23 @@ module.exports = {
         minimize: true,
         minimizer: [new TerserPlugin({ extractComments: false })],
     },
-    externals: [(context, request, callback) => {
-        const dir = path.join(context, request);
+    externals: [({ context, request }, callback) => {
+        let scriptPath = path.join(context, request);
         const basenameDir = path.basename(__dirname);
         if (/^@silly-tavern/.test(request)) {
-            const script = (path.relative(context, sillyTavern) + '\\' + request.replace('@silly-tavern/', '')).replace(/\\/g, '/');
+            const script = (relativePath + '\\' + request.replace('@silly-tavern/', '')).replace(/\\/g, '/');
             return callback(null, script);
         }
-        if (!dir.includes(basenameDir)) {
-            console.log(`${dir} ${__dirname}`);
-            const script = (path.relative(context, dir) + '\\' + path.basename(request) + '.js').replace(/\\/g, '/');
-            console.log(`${script}`);
-            return callback(null, script);
+        if (!scriptPath.includes(basenameDir)) {
+            let isJs = path.extname(scriptPath) === '.js';
+            if (!isJs) {
+                isJs = fs.existsSync(scriptPath + '.js');
+                scriptPath = isJs ? scriptPath + '.js' : scriptPath;
+            }
+            if (isJs) {
+                const script = (relativePath  + scriptPath.replace(sillyTavern,'')).replace(/\\/g, '/');
+                return callback(null, script);
+            }
         }
         callback();
     }],
