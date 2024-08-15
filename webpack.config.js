@@ -63,7 +63,7 @@ module.exports = {
         minimize: true,
         minimizer: [new TerserPlugin({ extractComments: false })],
         splitChunks:{
-            chunks: 'initial',
+            chunks: 'async',
         },
     },
     externals: [({ context, request }, callback) => {
