@@ -20,7 +20,7 @@ module.exports = {
         filename: '[name].js',
         path: path.join(__dirname, 'dist/'),
         chunkFormat: 'module',
-        chunkFilename: '[name].js',
+        chunkFilename: '[name].[contenthash].chunk.js',
         library: {
             // do not specify a `name` here
             type: 'module',
@@ -63,22 +63,7 @@ module.exports = {
         minimize: true,
         minimizer: [new TerserPlugin({ extractComments: false })],
         splitChunks:{
-            chunks: 'all',
-            minSize: 0,
-            cacheGroups: {
-                defaultVendors: {
-                    test: /[\\/]node_modules[\\/]/,
-                    priority: -10,
-                    reuseExistingChunk: true,
-                    filename: 'vendors.js',
-                },
-                default: {
-                    minChunks: 2,
-                    priority: -20,
-                    reuseExistingChunk: true,
-                    filename: 'default.js',
-                },
-            },
+            chunks: 'initial',
         },
     },
     externals: [({ context, request }, callback) => {
@@ -99,6 +84,7 @@ module.exports = {
                 return callback(null, script);
             }
         }
+        console.log(`External: ${request} Context: ${context} Path: ${scriptPath}`);
         callback();
     }],
 };
