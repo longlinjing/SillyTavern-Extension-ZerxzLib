@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
-//
+
 // import path from 'node:path';
 // import TerserPlugin from 'terser-webpack-plugin';
 // import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
@@ -14,12 +13,14 @@ module.exports = {
     experiments: {
         outputModule: true,
     },
-    devtool: 'inline-source-map',
     target: 'browserslist',
-    entry: path.join(__dirname, 'src/index.ts'),
+    entry: {
+        index: path.join(__dirname, 'src/index.ts'),
+    },
     output: {
+        filename: '[name].js',
         path: path.join(__dirname, 'dist/'),
-        filename: 'index.js',
+        chunkFilename: '[name].chunk.js',
         library: {
             // do not specify a `name` here
             type: 'module',
@@ -27,31 +28,16 @@ module.exports = {
     },
 
     resolve: {
-        extensions: ['.ts', '.js'],
-        plugins: [new TsconfigPathsPlugin({ extensions: ['.ts', '.js', '.tsx'], baseUrl: path.join(__dirname, 'src/'), configFile: path.join(__dirname, 'tsconfig.json') })],
+        extensions: ['.ts', '.js', '.tsx', '.jsx'],
+        plugins: [new TsconfigPathsPlugin({ extensions: ['.ts', '.js', '.tsx', '.jsx'], baseUrl: path.join(__dirname, 'src/'), configFile: path.join(__dirname, 'tsconfig.json') })],
         alias: {
             '@silly-tavern': path.join(__dirname, '../../../../..'),
         },
     },
     module: {
-        // noParse:/.js/,
         rules: [
-            // {
-            //     test: /\.ts$/,
-            //     exclude: [
-            //         /node_modules/,
-            //     ],
-            //     use: {
-            //         loader: 'esbuild-loader',
-            //         options: {
-            //             loader: 'default',
-            //             target: 'es2015',
-            //             format:"esm"
-            //         },
-            //     },
-            // }
             {
-                test: /\.ts$/,
+                test: /\.[jt]sx?$/,
                 exclude: [
                     /node_modules/,
                 ],
@@ -78,9 +64,13 @@ module.exports = {
         minimizer: [new TerserPlugin({ extractComments: false })],
     },
     externals: [(context, request, callback) => {
-        console.log(`context: ${context} request: ${request}`);
         if (/^@silly-tavern/.test(request)) {
             return callback(null, `../../../../../${request.replace('@silly-tavern/', '')}`);
+        }
+        const dir = path.join(context, request);
+        const basenameDir = path.basename(__dirname);
+        if (!dir.includes(basenameDir)) {
+            return callback(null, request);
         }
         callback();
     }],
