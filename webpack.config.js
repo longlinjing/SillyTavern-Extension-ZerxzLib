@@ -5,9 +5,9 @@ const TerserPlugin = require('terser-webpack-plugin');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const sillyTavern = __dirname.substring(0, __dirname.lastIndexOf('public') + 6);
 const manifest = require(path.join(__dirname, 'manifest.json'));
-let { js:scriptFilepath } = manifest;
+let { js: scriptFilepath } = manifest;
 scriptFilepath = path.dirname(path.join(__dirname, scriptFilepath));
-const relativePath = path.relative(scriptFilepath, sillyTavern );
+const relativePath = path.relative(scriptFilepath, sillyTavern);
 module.exports = {
     experiments: {
         outputModule: true,
@@ -25,7 +25,7 @@ module.exports = {
             type: 'module',
         },
     },
-
+    plugins: [],
     resolve: {
         extensions: ['.ts', '.js', '.tsx', '.jsx'],
         plugins: [new TsconfigPathsPlugin({ extensions: ['.ts', '.js', '.tsx', '.jsx'], baseUrl: path.join(__dirname, 'src/'), configFile: path.join(__dirname, 'tsconfig.json') })],
@@ -61,7 +61,7 @@ module.exports = {
 
         minimize: true,
         minimizer: [new TerserPlugin({ extractComments: false })],
-        splitChunks:{
+        splitChunks: {
             chunks: 'all',
             minSize: 20000,
             maxSize: 0,
@@ -103,7 +103,7 @@ module.exports = {
                 scriptPath = isJs ? scriptPath + '.js' : scriptPath;
             }
             if (isJs) {
-                const script = (relativePath  + scriptPath.replace(sillyTavern,'')).replace(/\\/g, '/');
+                const script = (relativePath + scriptPath.replace(sillyTavern, '')).replace(/\\/g, '/');
                 return callback(null, script);
             }
         }
