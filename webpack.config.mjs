@@ -2,40 +2,34 @@ import path from 'node:path';
 import fs from 'node:fs';
 import TerserPlugin from 'terser-webpack-plugin';
 import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
-
-import ChunksWebpackPlugin from 'chunks-webpack-plugin';
 import * as url from 'url';
 
-const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 const __filename = url.fileURLToPath(import.meta.url);
-console.log(`__dirname: ${__dirname} __filename: ${__filename}`);
-const manifest = JSON.parse(fs.readFileSync('./manifest.json', 'utf8'));
-
+const __dirname = path.dirname(__filename);
 
 const sillyTavern = __dirname.substring(0, __dirname.lastIndexOf('public') + 6);
+const manifest = JSON.parse(fs.readFileSync('./manifest.json', 'utf8'));
 let { js: scriptFilepath } = manifest;
 scriptFilepath = path.dirname(path.join(__dirname, scriptFilepath));
-console.log(`scriptFilepath: ${scriptFilepath}`);
 const relativePath = path.relative(scriptFilepath, sillyTavern);
-const templateScript = (name) => {
-    const result = `export * as ${path.basename(name).replace('.js', '')} from './${name}';`;
-    console.log(`Template Script: ${result}`);
-    return result;
-};
+
 export default {
     experiments: {
         outputModule: true,
     },
     target: 'browserslist',
     entry: {
-        'zerxzLib': { import: './src/index.ts', dependOn: ['react-vendors', 'sandbox-vendors'] },
-        'react-vendors': { import: ['react', 'react-dom'] },
-        'sandbox-vendors': { import: ['@nyariv/sandboxjs'] },
+        // 'zerxzLib': './src/index.ts',
+        'zerxzLib': { import: './src/index.ts', dependOn: ['react', 'sandboxjs'] },
+        'react': { import: ['react', 'react-dom'] },
+        'sandboxjs': { import: ['@nyariv/sandboxjs'] },
     },
     output: {
         filename: '[name].js',
         path: path.join(__dirname, 'dist/'),
         chunkFilename: '[name].[contenthash].chunk.js',
+        asyncChunks: true,
+        chunkLoading: 'import',
         library: {
             // do not specify a `name` here
             type: 'module',
@@ -83,23 +77,23 @@ export default {
         minimize: true,
         minimizer: [new TerserPlugin({ extractComments: false, exclude: /index/ })],
         splitChunks: {
-            chunks: 'async',
+            chunks: 'all',
             minSize: 20000,
             minChunks: 1,
             maxAsyncRequests: 30,
             maxInitialRequests: 30,
             cacheGroups: {
-                vendor: {
-                    name(module) {
-                        const packageName = module.context.match(
-                            /[\\/]node_modules[\\/](.*?)([\\/]|$)/,
-                        )[1];
-                        return `${packageName.replace('@', '')}`;
-                    },
-                    test: /[\\/]node_modules[\\/]/,
-                    priority: -10,
-                    enforce: true,
-                },
+                // vendor: {
+                //     name(module) {
+                //         const packageName = module.context.match(
+                //             /[\\/]node_modules[\\/](.*?)([\\/]|$)/,
+                //         )[1];
+                //         return `${packageName.replace('@', '')}`;
+                //     },
+                //     test: /[\\/]node_modules[\\/]/,
+                //     priority: -10,
+                //     enforce: true,
+                // },
                 default: {
                     name: 'default',
                     minChunks: 2,
