@@ -91,7 +91,7 @@ export default {
         minimize: true,
         minimizer: [new TerserPlugin({ extractComments: false })],
         splitChunks: {
-            chunks: 'all',
+            chunks: 'async',
             minSize: 20000,
             minChunks: 1,
             maxAsyncRequests: 30,
