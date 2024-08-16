@@ -1,1 +1,4 @@
-import"./react.js";import"./react-dom.js";import"./scheduler.js";import"./nyariv.js";import init from"./zerxz-lib.js";init();
+import * as lib from './lib.js';
+for(let key in lib) {
+  lib[key]();
+}

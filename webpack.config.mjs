@@ -17,14 +17,18 @@ let { js: scriptFilepath } = manifest;
 scriptFilepath = path.dirname(path.join(__dirname, scriptFilepath));
 console.log(`scriptFilepath: ${scriptFilepath}`);
 const relativePath = path.relative(scriptFilepath, sillyTavern);
-const templateScript = (name, isDefer) => isDefer ?`import './${name}';` : `import init from './${name}';init();`;
+const templateScript = (name) =>{
+    const result =  `export * as ${path.basename(name).replace('.js','')} from './${name}';`;
+    console.log(`Template Script: ${result}`);
+    return result;
+};
 export default {
     experiments: {
         outputModule: true,
     },
     target: 'browserslist',
     entry: {
-        'zerxz-lib': path.join(__dirname, 'src/index.ts'),
+        'zerxzLib': path.join(__dirname, 'src/index.ts'),
     },
     output: {
         filename: '[name].js',
@@ -36,10 +40,10 @@ export default {
         },
     },
     plugins: [new ChunksWebpackPlugin({
-        filename:"index.js",
-        templateScript: (name, entryName) =>templateScript(name, !name.includes(entryName)),
+        filename:'lib.js',
+        templateScript: (name) =>templateScript(name),
 
-        generateChunksManifest: true
+        generateChunksManifest: true,
     })],
     resolve: {
         extensions: ['.ts', '.js', '.tsx', '.jsx'],
@@ -75,9 +79,9 @@ export default {
     optimization: {
 
         minimize: true,
-        minimizer: [new TerserPlugin({ extractComments: false })],
+        minimizer: [new TerserPlugin({ extractComments: false,exclude: /index/ })],
         splitChunks: {
-            chunks: 'all',
+            chunks: 'async',
             minSize: 20000,
             minChunks: 1,
             maxAsyncRequests: 30,

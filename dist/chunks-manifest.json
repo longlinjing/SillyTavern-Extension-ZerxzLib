@@ -1,12 +1,8 @@
 {
-  "zerxz-lib": {
+  "zerxzLib": {
     "styles": [],
     "scripts": [
-      "react.js",
-      "react-dom.js",
-      "scheduler.js",
-      "nyariv.js",
-      "zerxz-lib.js"
+      "zerxzLib.js"
     ]
   }
 }
