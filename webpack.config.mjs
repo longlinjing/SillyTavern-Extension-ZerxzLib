@@ -20,9 +20,8 @@ export default {
     target: 'browserslist',
     entry: {
         // 'zerxzLib': './src/index.ts',
-        'zerxzLib': { import: './src/index.ts', dependOn: ['react', 'sandboxjs'] },
+        'zerxzLib': { import: './src/index.ts', dependOn: ['react'] },
         'react': { import: ['react', 'react-dom'] },
-        'sandboxjs': { import: ['@nyariv/sandboxjs'], library: { type: 'module', export: 'submodule' } },
     },
     output: {
         filename: '[name].js',
