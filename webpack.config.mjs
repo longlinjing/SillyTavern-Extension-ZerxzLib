@@ -20,16 +20,11 @@ export default {
     devtool: 'source-map',
     target: 'browserslist',
     entry: {
-        'zerxzLib': { import: './src/index.ts' },
+        'zerxzLib': { import: './src/index.ts', dependOn: ['react'] },
+        'react': { import: ['react', 'react-dom'] },
     },
     output: {
-        filename(name) {
-            if (name === 'vendor') {
-                return '[name].[contenthash].js';
-
-            }
-            return '[name].js';
-        },
+        filename: '[name].js',
         path: path.join(__dirname, 'dist/'),
         chunkFilename: '[name].[contenthash].chunk.js',
         asyncChunks: true,
@@ -104,8 +99,6 @@ export default {
             cacheGroups: {
                 vendor: {
                     name: 'vendor',
-                    minSize: 20000,
-                    minChunks: 1,
                     test: /[\\/]node_modules[\\/]/,
                     priority: -10,
                 },
