@@ -22,7 +22,7 @@ export default {
         // 'zerxzLib': './src/index.ts',
         'zerxzLib': { import: './src/index.ts', dependOn: ['react', 'sandboxjs'] },
         'react': { import: ['react', 'react-dom'] },
-        'sandboxjs': { import: ['@nyariv/sandboxjs'] },
+        'sandboxjs': { import: ['@nyariv/sandboxjs'], library: { type: 'module', export: 'submodule' } },
     },
     output: {
         filename: '[name].js',
@@ -30,6 +30,7 @@ export default {
         chunkFilename: '[name].[contenthash].chunk.js',
         asyncChunks: true,
         chunkLoading: 'import',
+        clean: true,
         library: {
             // do not specify a `name` here
             type: 'module',
