@@ -20,9 +20,8 @@ export default {
     devtool: 'source-map',
     target: 'browserslist',
     entry: {
-        // 'zerxzLib': './src/index.ts',
         'zerxzLib': { import: './src/index.ts', dependOn: ['react'] },
-        'react': { import: ['react', 'react-dom'] },
+        'react': { import: ['preact'] },
     },
     output: {
         filename: '[name].js',
@@ -39,7 +38,10 @@ export default {
         extensions: ['.ts', '.js', '.tsx', '.jsx'],
         plugins: [new TsconfigPathsPlugin({ extensions: ['.ts', '.js', '.tsx', '.jsx'], baseUrl: './src/', configFile: path.join(__dirname, 'tsconfig.json') })],
         alias: {
-            '@silly-tavern': path.join(__dirname, '../../../../..'),
+            "react": "preact/compat",
+            "react-dom/test-utils": "preact/test-utils",
+            "react-dom": "preact/compat",     // 必须放在 test-utils 下面
+            "react/jsx-runtime": "preact/jsx-runtime"
         },
     },
     module: {
@@ -77,6 +79,11 @@ export default {
             maxAsyncRequests: 30,
             maxInitialRequests: 30,
             cacheGroups: {
+                vendor:{
+                    name: 'vendor',
+                    test: /[\\/]node_modules[\\/]/,
+                    priority: -10,
+                },
                 default: {
                     name: 'default',
                     minChunks: 2,
