@@ -21,7 +21,9 @@ export default {
     target: 'browserslist',
     entry: {
         'zerxzLib': { import: './src/index.ts', dependOn: ['react'] },
-        'react': { import: ['react', 'react-dom', '@mui/material', '@emotion/styled', '@emotion/react'] },
+        'react': {
+            import: ['react', 'react-dom']
+        },
     },
     output: {
         filename(name) {
