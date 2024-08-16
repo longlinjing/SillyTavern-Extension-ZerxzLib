@@ -1,4 +1,1 @@
-import './nyari.js';
-import './react-dom-2594363e.js';
-import './react';
-import './zerxz-lib.js';
+import"./react.js";import"./react-dom-7dff463b.js";import"./react-dom-2594363e.js";import"./scheduler.js";import"./nyariv.js";import"./zerxz-lib.js";

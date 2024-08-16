@@ -1,14 +1,22 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
-const path = require('node:path');
-const fs = require('node:fs');
-const TerserPlugin = require('terser-webpack-plugin');
-const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+import path from 'node:path';
+import fs from 'node:fs';
+import TerserPlugin from 'terser-webpack-plugin';
+import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
+
+import ChunksWebpackPlugin from 'chunks-webpack-plugin';
+import * as url from 'url';
+
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+const __filename = url.fileURLToPath(import.meta.url);
+console.log(`__dirname: ${__dirname} __filename: ${__filename}`);
+const manifest = JSON.parse(fs.readFileSync('./manifest.json', 'utf8'));
+
+
 const sillyTavern = __dirname.substring(0, __dirname.lastIndexOf('public') + 6);
-const manifest = require(path.join(__dirname, 'manifest.json'));
 let { js: scriptFilepath } = manifest;
 scriptFilepath = path.dirname(path.join(__dirname, scriptFilepath));
 const relativePath = path.relative(scriptFilepath, sillyTavern);
-module.exports = {
+export default {
     experiments: {
         outputModule: true,
     },
@@ -25,10 +33,14 @@ module.exports = {
             type: 'module',
         },
     },
-    plugins: [],
+    plugins: [new ChunksWebpackPlugin({
+        filename:"index.js",
+        templateScript: (name, entryName) =>
+            `import './${name}';\n`
+    })],
     resolve: {
         extensions: ['.ts', '.js', '.tsx', '.jsx'],
-        plugins: [new TsconfigPathsPlugin({ extensions: ['.ts', '.js', '.tsx', '.jsx'], baseUrl: path.join(__dirname, 'src/'), configFile: path.join(__dirname, 'tsconfig.json') })],
+        plugins: [new TsconfigPathsPlugin({ extensions: ['.ts', '.js', '.tsx', '.jsx'], baseUrl: './src/', configFile: path.join(__dirname, 'tsconfig.json') })],
         alias: {
             '@silly-tavern': path.join(__dirname, '../../../../..'),
         },
