@@ -37,7 +37,7 @@ export default {
     plugins: [new ChunksWebpackPlugin({
         filename:"index.js",
         templateScript: (name, entryName) =>
-            `;(function(){const script=document.createElement("script");script.setAttribute("defer","defer");script.setAttribute("type","module");script .setAttribute("src",".${scriptFilepath.replace(sillyTavern,"").replace(/\\/g, '/')}/${name}");document.body.appendChild(script)})();`,
+            `;(function(){const script=document.createElement("script");script.setAttribute("defer","");script.setAttribute("type","module");script .setAttribute("src",".${scriptFilepath.replace(sillyTavern,"").replace(/\\/g, '/')}/${name}");document.body.appendChild(script)})();`,
         generateChunksManifest: true
     })],
     resolve: {
