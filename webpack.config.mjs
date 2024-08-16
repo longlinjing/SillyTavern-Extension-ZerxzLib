@@ -36,7 +36,7 @@ export default {
     plugins: [new ChunksWebpackPlugin({
         filename:"index.js",
         templateScript: (name, entryName) =>
-            `import './${name}';\n`,
+            `import('./${name}');\n`,
         templateStyle: (name, entryName) => `import './${name}';\n`,
         generateChunksManifest: true
     })],
