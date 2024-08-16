@@ -16,7 +16,7 @@ export default () => {
     const rootElement = document.createElement('div');
     rootContainer.appendChild(rootElement);
 
-    const root = ReactDOM.createRoot(rootElement);
+    const root = ReactDOM.createRoot(document.body);
     root.render(
         <React.StrictMode>
             <App />
