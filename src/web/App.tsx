@@ -8,6 +8,7 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
+import ScopedCssBaseline from '@mui/material/ScopedCssBaseline';
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
     children: React.ReactElement<any, any>;
@@ -33,7 +34,8 @@ function App() {
 
 
     return (
-    <React.Fragment>
+        <ScopedCssBaseline>
+
       <Button  variant="outlined" onClick={handleClickOpen}>
         Slide in alert dialog
       </Button>
@@ -56,7 +58,7 @@ function App() {
           <Button onClick={handleClose}>Agree</Button>
         </DialogActions>
       </Dialog>
-    </React.Fragment>
+    </ScopedCssBaseline>
 
     );
 }
