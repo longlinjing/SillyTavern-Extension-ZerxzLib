@@ -21,10 +21,16 @@ export default {
     target: 'browserslist',
     entry: {
         'zerxzLib': { import: './src/index.ts', dependOn: ['react'] },
-        'react': { import: ['react', 'react-dom'] },
+        'react': { import: ['react', 'react-dom', '@mui/material', '@emotion/styled', '@emotion/react'] },
     },
     output: {
-        filename: '[name].js',
+        filename(name) {
+            if (name === 'vendor') {
+                return '[name].[contenthash].js';
+
+            }
+            return '[name].js';
+        },
         path: path.join(__dirname, 'dist/'),
         chunkFilename: '[name].[contenthash].chunk.js',
         asyncChunks: true,
@@ -99,10 +105,10 @@ export default {
             cacheGroups: {
                 vendor: {
                     name: 'vendor',
+                    minSize: 20000,
+                    minChunks: 1,
                     test: /[\\/]node_modules[\\/]/,
                     priority: -10,
-                    reuseExistingChunk: true,
-                    enforce: true
                 },
                 default: {
                     name: 'default',
