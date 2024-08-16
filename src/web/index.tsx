@@ -12,7 +12,7 @@ import '@fontsource/roboto/700.css';
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 export default () => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const rootContainer = document.getElementById('extensions_settings')!;
+    const rootContainer = document.body!;
     const rootElement = document.createElement('div');
     rootContainer.appendChild(rootElement);
 
