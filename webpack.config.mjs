@@ -32,16 +32,9 @@ export default {
         chunkLoading: 'import',
         clean: true,
         library: {
-            // do not specify a `name` here
             type: 'module',
         },
     },
-    // plugins: [new ChunksWebpackPlugin({
-    //     filename:'lib.js',
-    //     templateScript: (name) =>templateScript(name),
-    //
-    //     generateChunksManifest: true,
-    // })],
     resolve: {
         extensions: ['.ts', '.js', '.tsx', '.jsx'],
         plugins: [new TsconfigPathsPlugin({ extensions: ['.ts', '.js', '.tsx', '.jsx'], baseUrl: './src/', configFile: path.join(__dirname, 'tsconfig.json') })],
@@ -84,17 +77,6 @@ export default {
             maxAsyncRequests: 30,
             maxInitialRequests: 30,
             cacheGroups: {
-                // vendor: {
-                //     name(module) {
-                //         const packageName = module.context.match(
-                //             /[\\/]node_modules[\\/](.*?)([\\/]|$)/,
-                //         )[1];
-                //         return `${packageName.replace('@', '')}`;
-                //     },
-                //     test: /[\\/]node_modules[\\/]/,
-                //     priority: -10,
-                //     enforce: true,
-                // },
                 default: {
                     name: 'default',
                     minChunks: 2,
@@ -122,7 +104,6 @@ export default {
                 return callback(null, script);
             }
         }
-        // console.log(`External: ${request} Context: ${context} Path: ${scriptPath}`);
         callback();
     }],
 };
