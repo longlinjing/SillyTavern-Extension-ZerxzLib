@@ -20,10 +20,7 @@ export default {
     devtool: 'source-map',
     target: 'browserslist',
     entry: {
-        'zerxzLib': { import: './src/index.ts', dependOn: ['react'] },
-        'react': {
-            import: ['react', 'react-dom']
-        },
+        'zerxzLib': { import: './src/index.ts' },
     },
     output: {
         filename(name) {
