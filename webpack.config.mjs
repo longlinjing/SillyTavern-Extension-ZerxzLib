@@ -17,7 +17,7 @@ let { js: scriptFilepath } = manifest;
 scriptFilepath = path.dirname(path.join(__dirname, scriptFilepath));
 console.log(`scriptFilepath: ${scriptFilepath}`);
 const relativePath = path.relative(scriptFilepath, sillyTavern);
-const templateScript = (name, isDefer) => `;(function(){const script=document.createElement("script");${isDefer ? 'script.setAttribute("defer","");' : ''}script.setAttribute("type","module");script .setAttribute("src",".${scriptFilepath.replace(sillyTavern,"").replace(/\\/g, '/')}/${name}");document.body.appendChild(script)})();`;
+const templateScript = (name, isDefer) => isDefer ?`import './${name}';` : `import init from './${name}';init();`;
 export default {
     experiments: {
         outputModule: true,
