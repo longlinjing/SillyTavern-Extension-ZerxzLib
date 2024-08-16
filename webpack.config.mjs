@@ -15,6 +15,7 @@ const manifest = JSON.parse(fs.readFileSync('./manifest.json', 'utf8'));
 const sillyTavern = __dirname.substring(0, __dirname.lastIndexOf('public') + 6);
 let { js: scriptFilepath } = manifest;
 scriptFilepath = path.dirname(path.join(__dirname, scriptFilepath));
+console.log(`scriptFilepath: ${scriptFilepath}`);
 const relativePath = path.relative(scriptFilepath, sillyTavern);
 export default {
     experiments: {
@@ -36,8 +37,7 @@ export default {
     plugins: [new ChunksWebpackPlugin({
         filename:"index.js",
         templateScript: (name, entryName) =>
-            `import('./${name}');\n`,
-        templateStyle: (name, entryName) => `import './${name}';\n`,
+            `;(function(){const script=document.createElement("script");script.setAttribute("defer","defer");script .setAttribute("src",".${scriptFilepath.replace(sillyTavern,"").replace(/\\/g, '/')}/${name}");document.body.appendChild(script)})();`,
         generateChunksManifest: true
     })],
     resolve: {
@@ -78,7 +78,6 @@ export default {
         splitChunks: {
             chunks: 'all',
             minSize: 20000,
-            maxSize: 0,
             minChunks: 1,
             maxAsyncRequests: 30,
             maxInitialRequests: 30,
