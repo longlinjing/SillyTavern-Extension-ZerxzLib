@@ -1,6 +1,8 @@
 /* global SillyTavern */
 
-import React from 'react';
+import * as React from 'react';
+import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
 
 // eslint-disable-next-line no-var
 function App() {
@@ -9,10 +11,15 @@ function App() {
     }
 
     return (
-        <div onClick={() => handleClick()
-        } className="menu_button" >
-            Click me
-        </div>
+        <Stack>
+            <Button className="menu_button" onClick={() => handleClick()}>
+                Click me
+            </Button>
+            <Button className="menu_button" onClick={() => handleClick()}>
+                Click me
+            </Button>
+        </Stack>
+
     );
 }
 

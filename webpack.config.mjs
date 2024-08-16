@@ -21,7 +21,7 @@ export default {
     target: 'browserslist',
     entry: {
         'zerxzLib': { import: './src/index.ts', dependOn: ['react'] },
-        'react': { import: ['preact'] },
+        'react': { import: ['react', 'react-dom'] },
     },
     output: {
         filename: '[name].js',
@@ -37,15 +37,33 @@ export default {
     resolve: {
         extensions: ['.ts', '.js', '.tsx', '.jsx'],
         plugins: [new TsconfigPathsPlugin({ extensions: ['.ts', '.js', '.tsx', '.jsx'], baseUrl: './src/', configFile: path.join(__dirname, 'tsconfig.json') })],
-        alias: {
-            "react": "preact/compat",
-            "react-dom/test-utils": "preact/test-utils",
-            "react-dom": "preact/compat",     // 必须放在 test-utils 下面
-            "react/jsx-runtime": "preact/jsx-runtime"
-        },
+        alias: {},
     },
     module: {
         rules: [
+            {
+                test: /\.css$/,
+                use: [
+                    "style-loader",
+                    {
+                        loader: "css-loader",
+                        options: {
+                            importLoaders: 1,
+                            modules: {
+                                auto: true,
+                                localIdentName:
+                                    "[hash:base64:5]",
+                            },
+                        },
+                    },
+                ],
+                include: /\.module\.css$/,
+            },
+            {
+                test: /\.css$/,
+                use: ["style-loader", "css-loader"],
+                exclude: /\.module\.css$/,
+            },
             {
                 test: /\.[jt]sx?$/,
                 exclude: [
@@ -79,7 +97,7 @@ export default {
             maxAsyncRequests: 30,
             maxInitialRequests: 30,
             cacheGroups: {
-                vendor:{
+                vendor: {
                     name: 'vendor',
                     test: /[\\/]node_modules[\\/]/,
                     priority: -10,
