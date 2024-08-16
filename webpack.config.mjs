@@ -42,6 +42,11 @@ export default {
     module: {
         rules: [
             {
+                test: /\.svg$/,
+                use: ['@svgr/webpack', 'url-loader'],
+            },
+
+            {
                 test: /\.css$/,
                 use: [
                     "style-loader",
