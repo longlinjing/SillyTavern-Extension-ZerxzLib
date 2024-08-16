@@ -34,7 +34,7 @@ function App() {
 
     return (
     <React.Fragment>
-      <Button <React.Fragment> >
+      <Button  variant="outlined" onClick={handleClickOpen}>
         Slide in alert dialog
       </Button>
       <Dialog
