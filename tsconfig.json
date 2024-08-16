@@ -114,16 +114,6 @@
     "node_modules",
     "dist",
     "bin"
-  ],
-  "plugins": [
-    // Transform paths in output .js files
-    {
-      "transform": "typescript-transform-paths"
-    },
-    // Transform paths in output .d.ts files (Include this line if you output declarations files)
-    {
-      "transform": "typescript-transform-paths",
-      "afterDeclarations": true
-    },
   ]
+
 }

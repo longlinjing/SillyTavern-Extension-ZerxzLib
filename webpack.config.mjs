@@ -28,7 +28,9 @@ export default {
     },
     target: 'browserslist',
     entry: {
-        'zerxzLib': path.join(__dirname, 'src/index.ts'),
+        'zerxzLib':{import: './src/index.ts', dependOn: 'react-vendors' },
+        'react-vendors': ['react', 'react-dom', 'prop-types'],
+
     },
     output: {
         filename: '[name].js',
@@ -39,12 +41,12 @@ export default {
             type: 'module',
         },
     },
-    plugins: [new ChunksWebpackPlugin({
-        filename:'lib.js',
-        templateScript: (name) =>templateScript(name),
-
-        generateChunksManifest: true,
-    })],
+    // plugins: [new ChunksWebpackPlugin({
+    //     filename:'lib.js',
+    //     templateScript: (name) =>templateScript(name),
+    //
+    //     generateChunksManifest: true,
+    // })],
     resolve: {
         extensions: ['.ts', '.js', '.tsx', '.jsx'],
         plugins: [new TsconfigPathsPlugin({ extensions: ['.ts', '.js', '.tsx', '.jsx'], baseUrl: './src/', configFile: path.join(__dirname, 'tsconfig.json') })],
@@ -125,7 +127,7 @@ export default {
                 return callback(null, script);
             }
         }
-        console.log(`External: ${request} Context: ${context} Path: ${scriptPath}`);
+        // console.log(`External: ${request} Context: ${context} Path: ${scriptPath}`);
         callback();
     }],
 };
