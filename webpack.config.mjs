@@ -89,7 +89,7 @@ export default {
     optimization: {
 
         minimize: true,
-        minimizer: [new TerserPlugin({ extractComments: false, exclude: /index/ })],
+        minimizer: [new TerserPlugin({ extractComments: false })],
         splitChunks: {
             chunks: 'all',
             minSize: 20000,
@@ -101,6 +101,8 @@ export default {
                     name: 'vendor',
                     test: /[\\/]node_modules[\\/]/,
                     priority: -10,
+                    reuseExistingChunk: true,
+                    enforce: true
                 },
                 default: {
                     name: 'default',
