@@ -17,8 +17,8 @@ let { js: scriptFilepath } = manifest;
 scriptFilepath = path.dirname(path.join(__dirname, scriptFilepath));
 console.log(`scriptFilepath: ${scriptFilepath}`);
 const relativePath = path.relative(scriptFilepath, sillyTavern);
-const templateScript = (name) =>{
-    const result =  `export * as ${path.basename(name).replace('.js','')} from './${name}';`;
+const templateScript = (name) => {
+    const result = `export * as ${path.basename(name).replace('.js', '')} from './${name}';`;
     console.log(`Template Script: ${result}`);
     return result;
 };
@@ -28,9 +28,9 @@ export default {
     },
     target: 'browserslist',
     entry: {
-        'zerxzLib':{import: './src/index.ts', dependOn: 'react-vendors' },
-        'react-vendors': ['react', 'react-dom', 'prop-types'],
-
+        'zerxzLib': { import: './src/index.ts', dependOn: ['react-vendors', 'sandbox-vendors'] },
+        'react-vendors': { import: ['react', 'react-dom'] },
+        'sandbox-vendors': { import: ['@nyariv/sandboxjs'] },
     },
     output: {
         filename: '[name].js',
@@ -81,7 +81,7 @@ export default {
     optimization: {
 
         minimize: true,
-        minimizer: [new TerserPlugin({ extractComments: false,exclude: /index/ })],
+        minimizer: [new TerserPlugin({ extractComments: false, exclude: /index/ })],
         splitChunks: {
             chunks: 'async',
             minSize: 20000,
