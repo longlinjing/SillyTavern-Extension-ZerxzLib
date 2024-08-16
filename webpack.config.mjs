@@ -17,6 +17,7 @@ export default {
     experiments: {
         outputModule: true,
     },
+    devtool: 'source-map',
     target: 'browserslist',
     entry: {
         // 'zerxzLib': './src/index.ts',

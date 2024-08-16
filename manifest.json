@@ -3,7 +3,7 @@
     "loading_order": 100,
     "requires": [],
     "optional": [],
-    "js": "dist/zerxzlib.js",
+    "js": "dist/zerxzLib.js",
     "css": "",
     "author": "ZerxZ",
     "version": "0.0.1",
