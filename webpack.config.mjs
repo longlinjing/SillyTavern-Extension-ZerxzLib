@@ -20,8 +20,8 @@ export default {
     devtool: 'source-map',
     target: 'browserslist',
     entry: {
-        'zerxzLib': { import: './src/index.ts', dependOn: ['react'] },
-        'react': { import: ['react', 'react-dom'] },
+        'zerxzLib': { import: './src/index.ts' },
+        // 'react': { import: ['react', 'react-dom'] },
     },
     output: {
         filename: '[name].js',
@@ -116,11 +116,13 @@ export default {
             },
         },
     },
-    externals: [({ context, request }, callback) => {
+    externals: [
+        ({ context, request }, callback) => {
         let scriptPath = path.join(context, request);
         const basenameDir = path.basename(__dirname);
         if (/^@silly-tavern/.test(request)) {
-            const script = (relativePath + '\\' + request.replace('@silly-tavern/', '')).replace(/\\/g, '/');
+            let script = (relativePath + '\\' + request.replace('@silly-tavern/', '')).replace(/\\/g, '/');
+            script = path.extname(script) === '.js' ? script : script + '.js';
             return callback(null, script);
         }
         if (!scriptPath.includes(basenameDir)) {
@@ -134,6 +136,10 @@ export default {
                 return callback(null, script);
             }
         }
+        console.log('External: ', scriptPath);
+        console.log('External: ', request);
         callback();
-    }],
+    },
+        /^(jquery|\$)$/i
+    ],
 };

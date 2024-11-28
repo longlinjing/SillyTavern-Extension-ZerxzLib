@@ -1,25 +1,16 @@
-import { getEntitiesList } from '@silly-tavern/script.js';
-import Sandbox from '@nyariv/sandboxjs';
-import web from './web';
-
-import { importFromScript } from 'utils';
-import { getApiUrl } from '../../../../extensions';
-
-
-
+import {eventSource, event_types, saveSettingsDebounced, getRequestHeaders, callPopup } from '@silly-tavern/script';
+import {extension_settings, getContext, loadExtensionSetting} from '@silly-tavern/scripts/extensions';
+import { secret_state, updateSecretDisplay, writeSecret } from '@silly-tavern/scripts/secrets';
+const extensionName = "SillyTavern-Extension-ZerxzLib";
+const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
+const extensionSettings = extension_settings[extensionName];
+const defaultSettings = {};
 export default async function init() {
-    console.log('init');
-    const script = await importFromScript('script.js');
-    console.log(script);
-    const { getContext } = await importFromScript('scripts/extensions.js') as { getContext: () => any };
-    console.log(getContext());
-    console.log('Hello from SillyTavern-Extension-ZerxzLib!');
-    console.log('Importing from SillyTavern-Extension-ZerxzLib/src/index.ts');
-    console.log(getEntitiesList());
-    console.log(new Sandbox());
-    console.log(getApiUrl());
-    web();
+console.log("ZerxzLib init");
 }
 
 
-init();
+JQuery(async () => {
+    await init();
+    console.log("ZerxzLib loaded");
+}  );

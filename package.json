@@ -2,6 +2,7 @@
   "name": "extension-zerxz-lib",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "scripts": {
     "build:dev": "webpack --mode development",
     "build": "webpack --mode production && node ./lib/copyFile.js",
