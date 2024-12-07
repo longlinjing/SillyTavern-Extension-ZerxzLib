@@ -20,12 +20,16 @@ const extensionName = "SillyTavern-Extension-ZerxzLib";
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 const extensionSettings = extension_settings[extensionName];
 const defaultSettings = {};
+let switchState = localStorage.getItem("switch_key_maker_suite") === "true";
 interface Model {
 	name: string;
 	model: string;
 }
 export default async function init(secrets: Record<string, string>) {
 	if (!secrets) {
+		return;
+	}
+	if (!switchState) {
 		return;
 	}
 	const modelStr = JSON.parse(secrets.models_makersuite ?? "[]") as Model[];
@@ -275,9 +279,14 @@ jQuery(async () => {
 	span2.textContent = `最后: ${secrets[key]?.split("\n").pop()}`;
 	// 添加id属性 `last_key_maker_suite`
 	span2.id = "last_key_maker_suite";
-
+	const swtichDiv = document.createElement("div");
+	// 设置内容
+	swtichDiv.textContent = `密钥切换:${switchState ? "开" : "关"}`;
+	// 添加id属性 `last_key_maker_suite`
+	swtichDiv.id = "switch_key_maker_suite";
 	flexContainer2.appendChild(span);
 	flexContainer2.appendChild(span2);
+	flexContainer2.appendChild(swtichDiv);
 	form.appendChild(flexContainer2);
 	form.appendChild(flexContainer);
 	const modelButton = await createButton("获取新的模型", async () => {
@@ -299,10 +308,17 @@ jQuery(async () => {
 		writeSecret("api_key_makersuite", fistValue);
 		saveKey(key, value.join("\n"));
 	});
+
+	const switchStateButton = await createButton("切换密钥设置", async () => {
+		switchState = !switchState;
+		localStorage.setItem("switch_key_maker_suite", switchState.toString());
+		swtichDiv.textContent = `密钥切换:${switchState ? "开" : "关"}`;
+	});
 	const div = document.createElement("div");
 	div.classList.add("flex-container", "flex");
 	div.appendChild(saveButton);
 	div.appendChild(modelButton);
+	div.appendChild(switchStateButton);
 	form.appendChild(div);
 	// 添加分割线
 	form.appendChild(document.createElement("hr"));
