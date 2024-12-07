@@ -45,27 +45,44 @@ export default async function init(secrets: Record<string, string>) {
 	console.log("subVersionsArray", subVersionsArray);
 	const subVersionsValues = subVersionsArray.map((el) => el.value);
 	const primaryVersionsValues = primaryVersionsArray.map((el) => el.value);
-	const mergedVersions = [
+	const originalVersions = [
 		...primaryVersionsValues,
 		...subVersionsValues,
-		...modelStr.map((model) => model.model),
-	];
+	].flat();
+	const cachedVersions = modelStr.map((model) => model.model);
+	// 判断是否初次加载
 	if (modelStr.length > 0) {
 		for (const model of modelStr) {
+			if (originalVersions.includes(model.model)) {
+				continue;
+			}
 			const option = document.createElement("option");
 			option.value = model.model;
-			option.text = model.name;
+			option.text = `${model.name}(${model.model})`;
 			subVersions.appendChild(option);
 		}
 	}
-	console.log("subVersionsValues", subVersionsValues);
+
+	// console.log("mergedVersions", mergedVersions);
+	// if (modelStr.length > 0) {
+	// 	for (const model of modelStr) {
+	// 		const option = document.createElement("option");
+	// 		option.value = model.model;
+	// 		option.text = model.name;
+	// 		subVersions.appendChild(option);
+	// 	}
+	// }
+	// console.log("subVersionsValues", subVersionsValues);
 
 	const geminiModels = await getGeminiModel(api_key);
 	console.log("geminiModels", geminiModels);
 	const geminiModelOptions = geminiModels.filter(
-		(model) => !mergedVersions.includes(model.model),
+		(model) =>
+			!originalVersions.includes(model.model) &&
+			!cachedVersions.includes(model.model),
 	);
 	if (geminiModelOptions.length === 0) {
+		console.log("没有新的模型");
 		return;
 	}
 
@@ -73,7 +90,7 @@ export default async function init(secrets: Record<string, string>) {
 	for (const model of geminiModelOptions) {
 		const option = document.createElement("option");
 		option.value = model.model;
-		option.text = model.name;
+		option.text = `${model.name}(${model.model})`;
 		subVersions.appendChild(option);
 	}
 	writeSecret("models_makersuite", JSON.stringify(geminiModelOptions));
@@ -143,7 +160,7 @@ async function getSecrets() {
 
 	// $("#dialogue_popup").addClass("wide_dialogue_popup");
 	const data = (await response.json()) as Record<string, string>;
-	console.log("data", data);
+	// console.log("data", data);
 	return data;
 }
 async function createButton(title: string, onClick: () => void) {
@@ -166,8 +183,8 @@ async function switchSecretsFromArray(generationType, _args, isDryRun) {
 	const api_keys = api_key
 		.split(/[\n;]/)
 		.map((v) => v.trim())
-		.filter((v) => v.length > 0 && v.startsWith("AIzaSy"));
-	if (api_keys.length === 0) {
+		.filter((v) => v.startsWith("AIzaSy"));
+	if (api_keys.length <= 1) {
 		return;
 	}
 	const currentKey = secrets.api_key_makersuite;
@@ -175,10 +192,10 @@ async function switchSecretsFromArray(generationType, _args, isDryRun) {
 	if (api_keys.includes(currentKey)) {
 		api_keys.splice(api_keys.indexOf(currentKey), 1);
 		api_keys.push(currentKey);
-		firstKeyApi = api_keys[0];
-		writeSecret("api_key_makersuite", firstKeyApi);
-		saveKey(key, api_keys.join("\n"));
 	}
+	firstKeyApi = api_keys[0];
+	writeSecret("api_key_makersuite", firstKeyApi);
+	saveKey(key, api_keys.join("\n"));
 	const textarea = $("#api_key_makersuite_custom")[0] as HTMLTextAreaElement;
 
 	const currentKeyElement = $("#current_key_maker_suite")[0] as HTMLSpanElement;
@@ -202,22 +219,6 @@ async function saveKey(key: string, value: string) {
 	saveSettingsDebounced();
 }
 jQuery(async () => {
-	// // 添加div元素
-	// const div = document.createElement("div");
-	// // 添加class 为"menu_button menu_button_icon interactable"的类
-	// div.classList.add("menu_button", "menu_button_icon", "interactable");
-	// // 添加title属性 获取新的模型
-	// div.title = "获取新的模型";
-	// // 添加点击事件
-	// div.onclick = async () => {
-	// 	// 获取模型
-	// 	await init();
-	// };
-	// // 添加span元素 内容为"获取新的模型"
-	// const span = document.createElement("span");
-	// span.textContent = "获取新的模型";
-	// div.appendChild(span);
-
 	// 获取form元素 id为"makersuite_form"的元素 用jquery的选择器
 	const secrets = (await getSecrets()) ?? {};
 	await init(secrets);
