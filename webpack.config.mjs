@@ -2,7 +2,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import TerserPlugin from 'terser-webpack-plugin';
 import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
-import * as url from 'url';
+import * as url from 'node:url';
 
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -118,28 +118,28 @@ export default {
     },
     externals: [
         ({ context, request }, callback) => {
-        let scriptPath = path.join(context, request);
-        const basenameDir = path.basename(__dirname);
-        if (/^@silly-tavern/.test(request)) {
-            let script = (relativePath + '\\' + request.replace('@silly-tavern/', '')).replace(/\\/g, '/');
-            script = path.extname(script) === '.js' ? script : script + '.js';
-            return callback(null, script);
-        }
-        if (!scriptPath.includes(basenameDir)) {
-            let isJs = path.extname(scriptPath) === '.js';
-            if (!isJs) {
-                isJs = fs.existsSync(scriptPath + '.js');
-                scriptPath = isJs ? scriptPath + '.js' : scriptPath;
-            }
-            if (isJs) {
-                const script = (relativePath + scriptPath.replace(sillyTavern, '')).replace(/\\/g, '/');
+            let scriptPath = path.join(context, request);
+            const basenameDir = path.basename(__dirname);
+            if (/^@silly-tavern/.test(request)) {
+                let script = (`${relativePath}\\${request.replace('@silly-tavern/', '')}`).replace(/\\/g, '/');
+                script = path.extname(script) === '.js' ? script : `${script}.js`;
                 return callback(null, script);
             }
-        }
-        console.log('External: ', scriptPath);
-        console.log('External: ', request);
-        callback();
-    },
+            if (!scriptPath.includes(basenameDir)) {
+                let isJs = path.extname(scriptPath) === '.js';
+                if (!isJs) {
+                    isJs = fs.existsSync(`${scriptPath}.js`);
+                    scriptPath = isJs ? `${scriptPath}.js` : scriptPath;
+                }
+                if (isJs) {
+                    const script = (relativePath + scriptPath.replace(sillyTavern, '')).replace(/\\/g, '/');
+                    return callback(null, script);
+                }
+            }
+            console.log('External: ', scriptPath);
+            console.log('External: ', request);
+            callback();
+        },
         /^(jquery|\$)$/i
     ],
 };

@@ -16,10 +16,8 @@ import {
 	writeSecret,
 } from "@silly-tavern/scripts/secrets";
 import { oai_settings } from "@silly-tavern/scripts/openai";
-const extensionName = "SillyTavern-Extension-ZerxzLib";
-const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
-const extensionSettings = extension_settings[extensionName];
-const defaultSettings = {};
+import { getGeminiModel, isGeminiSource, throwGeminiError } from "utils/index";
+import { callGenericPopup, POPUP_TYPE } from "@silly-tavern/scripts/popup";
 let switchState = localStorage.getItem("switch_key_maker_suite") === "true";
 interface Model {
 	name: string;
@@ -27,9 +25,6 @@ interface Model {
 }
 export default async function init(secrets: Record<string, string>) {
 	if (!secrets) {
-		return;
-	}
-	if (!switchState) {
 		return;
 	}
 	const modelStr = JSON.parse(secrets.models_makersuite ?? "[]") as Model[];
@@ -66,18 +61,6 @@ export default async function init(secrets: Record<string, string>) {
 			subVersions.appendChild(option);
 		}
 	}
-
-	// console.log("mergedVersions", mergedVersions);
-	// if (modelStr.length > 0) {
-	// 	for (const model of modelStr) {
-	// 		const option = document.createElement("option");
-	// 		option.value = model.model;
-	// 		option.text = model.name;
-	// 		subVersions.appendChild(option);
-	// 	}
-	// }
-	// console.log("subVersionsValues", subVersionsValues);
-
 	const geminiModels = await getGeminiModel(api_key);
 	console.log("geminiModels", geminiModels);
 	const geminiModelOptions = geminiModels.filter(
@@ -85,64 +68,31 @@ export default async function init(secrets: Record<string, string>) {
 			!originalVersions.includes(model.model) &&
 			!cachedVersions.includes(model.model),
 	);
+
 	if (geminiModelOptions.length === 0) {
 		console.log("没有新的模型");
-		return;
+	} else {
+		console.log("geminiModelOptions", geminiModelOptions);
+		for (const model of geminiModelOptions) {
+			const option = document.createElement("option");
+			option.value = model.model;
+			option.text = `${model.name}(${model.model})`;
+			subVersions.appendChild(option);
+		}
+		saveKey("models_makersuite", JSON.stringify(geminiModelOptions));
+	}
+	const uniqueModels = new Set([...originalVersions, ...cachedVersions, ...geminiModelOptions.map((model) => model.model)]);
+	if (GOOGLE_SOURCES.includes(oai_settings.chat_completion_source) && !!secrets.api_key_makersuite_model) {
+		if (!uniqueModels.has(secrets.api_key_makersuite_model)) {
+			return
+		}
+		oai_settings.google_model = secrets.api_key_makersuite_model;
+		$('#model_google_select').val(oai_settings.google_model);
+		$(`#model_google_select option[value="${oai_settings.google_model}"`).attr('selected', true);
 	}
 
-	console.log("geminiModelOptions", geminiModelOptions);
-	for (const model of geminiModelOptions) {
-		const option = document.createElement("option");
-		option.value = model.model;
-		option.text = `${model.name}(${model.model})`;
-		subVersions.appendChild(option);
-	}
-	writeSecret("models_makersuite", JSON.stringify(geminiModelOptions));
-	// 更新密钥显示
-	updateSecretDisplay();
-	// 保存设置
-	saveSettingsDebounced();
-}
-interface GeminiModel {
-	description: string;
-	displayName: string;
-	inputTokenLimit: number;
-	maxTemperature: number;
-	name: string;
-	outputTokenLimit: number;
-	supportedGenerationMethods: string[];
-	temperature: number;
-	topK: number;
-	topP: number;
-	version: string;
-}
-interface GeminiResponse {
-	models: GeminiModel[];
 }
 
-async function getGeminiModel(key: string) {
-	try {
-		const result = await fetch(
-			`https://generativelanguage.googleapis.com/v1beta/models/?key=${key}`,
-		);
-		const data = (await result.json()) as GeminiResponse;
-		console.log(data);
-		return data.models
-			.filter((model) => model.name.includes("gemini"))
-			.map((modelData) => {
-				const model = modelData.name.replace("models/", "");
-				const name = modelData.displayName;
-
-				return {
-					name,
-					model,
-				};
-			});
-	} catch (e) {
-		console.error(e);
-		return [];
-	}
-}
 const key = "api_key_makersuite_custom";
 async function getSecrets() {
 	const response = await fetch("/api/secrets/view", {
@@ -182,7 +132,9 @@ async function switchSecretsFromArray(generationType, _args, isDryRun) {
 	if (!secrets) {
 		return;
 	}
-
+	if (!switchState) {
+		return;
+	}
 	const api_key = secrets[key] ?? "";
 	const api_keys = api_key
 		.split(/[\n;]/)
@@ -214,15 +166,44 @@ async function switchSecretsFromArray(generationType, _args, isDryRun) {
 
 	textarea.value = api_keys.join("\n");
 }
-async function saveKey(key: string, value: string) {
+async function saveKey(key: string, value: string, isUpdateSecretDisplay = true) {
 	// 设置密钥
-	writeSecret(key, value);
+	await writeSecret(key, value);
 	// 更新密钥显示
+	if (isUpdateSecretDisplay) {
+		updateSecretDisplay();
+	}
 	updateSecretDisplay();
 	// 保存设置
 	saveSettingsDebounced();
 }
+const GOOGLE_SOURCES = ["makersuite", "google"];
 jQuery(async () => {
+	// @ts-ignore
+	const oldError = toastr.error;
+	// @ts-ignore
+	toastr.error = (/** @type { any[]} */ ...args) => {
+
+		oldError(...args);
+		console.log(args);
+		console.error(...args);
+		if (!isGeminiSource()) {
+			return
+		}
+		const [message, type] = args;
+
+		if (!type) {
+			return
+		}
+		if (type === 'Chat Completion API') {
+			const lastKeyElement = $("#last_key_maker_suite")[0] as HTMLSpanElement;
+			throwGeminiError(`<h3>Chat Completion API 错误</h3>
+				<p>${message}</p>
+				<p> ${lastKeyElement.textContent}</p>`);
+		}
+
+	};
+
 	// 获取form元素 id为"makersuite_form"的元素 用jquery的选择器
 	const secrets = (await getSecrets()) ?? {};
 	await init(secrets);
@@ -314,11 +295,15 @@ jQuery(async () => {
 		localStorage.setItem("switch_key_maker_suite", switchState.toString());
 		swtichDiv.textContent = `密钥切换:${switchState ? "开" : "关"}`;
 	});
+	const throwGeminiErrorButton = await createButton("查看报错原因", async () => {
+		throwGeminiError();
+	});
 	const div = document.createElement("div");
 	div.classList.add("flex-container", "flex");
 	div.appendChild(saveButton);
 	div.appendChild(modelButton);
 	div.appendChild(switchStateButton);
+	div.appendChild(throwGeminiErrorButton);
 	form.appendChild(div);
 	// 添加分割线
 	form.appendChild(document.createElement("hr"));
@@ -327,4 +312,7 @@ jQuery(async () => {
 		event_types.CHAT_COMPLETION_SETTINGS_READY,
 		switchSecretsFromArray,
 	);
+	eventSource.on(event_types.CHATCOMPLETION_MODEL_CHANGED, async (model: string) => {
+		if (isGeminiSource()) await saveKey("api_key_makersuite_model", model);
+	})
 });
