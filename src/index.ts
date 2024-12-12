@@ -3,13 +3,7 @@ import {
 	event_types,
 	saveSettingsDebounced,
 	getRequestHeaders,
-	callPopup,
-} from "@silly-tavern/script";
-import {
-	extension_settings,
-	getContext,
-	loadExtensionSetting,
-} from "@silly-tavern/scripts/extensions";
+} from "@silly-tavern/script";;
 import {
 	secret_state,
 	updateSecretDisplay,
@@ -19,6 +13,7 @@ import { oai_settings } from "@silly-tavern/scripts/openai";
 import { getGeminiModel, isGeminiSource, throwGeminiError } from "utils/index";
 import { callGenericPopup, POPUP_TYPE } from "@silly-tavern/scripts/popup";
 let switchState = localStorage.getItem("switch_key_maker_suite") === "true";
+let throwGeminiErrorState = localStorage.getItem("throw_gemini_error") !== "true";
 interface Model {
 	name: string;
 	model: string;
@@ -101,9 +96,9 @@ async function getSecrets() {
 	});
 
 	if (response.status === 403) {
-		callPopup(
+		callGenericPopup(
 			"<h3>禁止访问</h3><p>要在此处查看您的 API 密钥，请在 config.yaml 文件中将 allowKeysExposure 的值设置为 true，然后重新启动 SillyTavern 服务器。</p>",
-			"text",
+			POPUP_TYPE.TEXT
 		);
 		return;
 	}
@@ -187,7 +182,7 @@ jQuery(async () => {
 		oldError(...args);
 		console.log(args);
 		console.error(...args);
-		if (!isGeminiSource()) {
+		if (!isGeminiSource() || !throwGeminiErrorState) {
 			return
 		}
 		const [message, type] = args;
@@ -265,6 +260,10 @@ jQuery(async () => {
 	swtichDiv.textContent = `密钥切换:${switchState ? "开" : "关"}`;
 	// 添加id属性 `last_key_maker_suite`
 	swtichDiv.id = "switch_key_maker_suite";
+	const throwGeminiErrorDiv = document.createElement("div");
+	// 设置内容
+	throwGeminiErrorDiv.textContent = `报错开关:${throwGeminiErrorState ? "开" : "关"}`;
+	throwGeminiErrorDiv.id = "throw_gemini_error";
 	flexContainer2.appendChild(span);
 	flexContainer2.appendChild(span2);
 	flexContainer2.appendChild(swtichDiv);
@@ -295,8 +294,14 @@ jQuery(async () => {
 		localStorage.setItem("switch_key_maker_suite", switchState.toString());
 		swtichDiv.textContent = `密钥切换:${switchState ? "开" : "关"}`;
 	});
+
 	const throwGeminiErrorButton = await createButton("查看报错原因", async () => {
 		throwGeminiError();
+	});
+	const throwGeminiErrorSwitchButton = await createButton("报错开关", async () => {
+		throwGeminiErrorState = !throwGeminiErrorState;
+		localStorage.setItem("throw_gemini_error", throwGeminiErrorState.toString());
+		throwGeminiErrorDiv.textContent = `报错开关:${throwGeminiErrorState ? "开" : "关"}`;
 	});
 	const div = document.createElement("div");
 	div.classList.add("flex-container", "flex");
@@ -304,6 +309,7 @@ jQuery(async () => {
 	div.appendChild(modelButton);
 	div.appendChild(switchStateButton);
 	div.appendChild(throwGeminiErrorButton);
+	div.appendChild(throwGeminiErrorSwitchButton);
 	form.appendChild(div);
 	// 添加分割线
 	form.appendChild(document.createElement("hr"));
