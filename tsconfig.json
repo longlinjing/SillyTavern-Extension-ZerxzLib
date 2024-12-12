@@ -14,7 +14,7 @@
       "es2015",
       "dom"
     ], /* Specify a set of bundled library declaration files that describe the target runtime environment. */
-    // "experimentalDecorators": true,                   /* Enable experimental support for legacy experimental decorators. */
+    "experimentalDecorators": true,                   /* Enable experimental support for legacy experimental decorators. */
     // "emitDecoratorMetadata": true,                    /* Emit design-type metadata for decorated declarations in source files. */
     // "jsxFactory": "",                                 /* Specify the JSX factory function used when targeting React JSX emit, e.g. 'React.createElement' or 'h'. */
     // "jsxFragmentFactory": "",                         /* Specify the JSX Fragment reference used for fragments when targeting React JSX emit e.g. 'React.Fragment' or 'Fragment'. */
@@ -26,7 +26,7 @@
     "moduleDetection": "auto", /* Control what method is used to detect module-format JS files. */
     "module": "ESNext", /* Specify what module code is generated. */
     // "rootDir": "./",                                  /* Specify the root folder within your source files. */
-    // "moduleResolution": "classic", /* Specify how TypeScript looks up a file from a given module specifier. */
+    "moduleResolution": "node", /* Specify how TypeScript looks up a file from a given module specifier. */
     "baseUrl": "./src", /* Specify the base directory to resolve non-relative module names. */
     "paths": {
       "@silly-tavern/*": [
@@ -103,6 +103,7 @@
     /* Completeness */
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
     "skipLibCheck": true /* Skip type checking all .d.ts files. */
+
   },
   "include": [
     "src/**/*.ts",

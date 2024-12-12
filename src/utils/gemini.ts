@@ -1,57 +1,67 @@
 import { oai_settings } from "@silly-tavern/scripts/openai";
 import { callGenericPopup, POPUP_TYPE } from "@silly-tavern/scripts/popup";
+import {
+	secret_state,
+	updateSecretDisplay,
+	writeSecret,
+} from "@silly-tavern/scripts/secrets";
+import { saveKey } from "./utils";
 interface GeminiModel {
-    description: string;
-    displayName: string;
-    inputTokenLimit: number;
-    maxTemperature: number;
-    name: string;
-    outputTokenLimit: number;
-    supportedGenerationMethods: string[];
-    temperature: number;
-    topK: number;
-    topP: number;
-    version: string;
+	description: string;
+	displayName: string;
+	inputTokenLimit: number;
+	maxTemperature: number;
+	name: string;
+	outputTokenLimit: number;
+	supportedGenerationMethods: string[];
+	temperature: number;
+	topK: number;
+	topP: number;
+	version: string;
 }
 interface GeminiResponse {
-    models: GeminiModel[];
+	models: GeminiModel[];
+}
+interface Model {
+	name: string;
+	model: string;
 }
 
 export async function getGeminiModel(key: string) {
-    try {
-        const result = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/?key=${key}`,
-        );
-        const data = (await result.json()) as GeminiResponse;
-        if (!data?.models) {
-            return [];
-        }
-        console.log(data);
-        return data.models
-            .filter((model) => model.name.includes("gemini"))
-            .map((modelData) => {
-                const model = modelData.name.replace("models/", "");
-                const name = modelData.displayName;
+	try {
+		const result = await fetch(
+			`https://generativelanguage.googleapis.com/v1beta/models/?key=${key}`,
+		);
+		const data = (await result.json()) as GeminiResponse;
+		if (!data?.models) {
+			return [];
+		}
+		console.log(data);
+		return data.models
+			.filter((model) => model.name.includes("gemini"))
+			.map((modelData) => {
+				const model = modelData.name.replace("models/", "");
+				const name = modelData.displayName;
 
-                return {
-                    name,
-                    model,
-                };
-            });
-    } catch (e) {
-        console.error(e);
-        return [];
-    }
+				return {
+					name,
+					model,
+				};
+			});
+	} catch (e) {
+		console.error(e);
+		return [];
+	}
 }
 
 export const GEMINI_SOURCES = ["makersuite", "aistudio"];
 
 export const isGeminiSource = () =>
-    GEMINI_SOURCES.includes(oai_settings.chat_completion_source);
+	GEMINI_SOURCES.includes(oai_settings.chat_completion_source);
 
 export function throwGeminiError(text = "") {
 
-    callGenericPopup(`
+	callGenericPopup(`
 				${text}
 				<table class="responsiveTable">
 					<thead>
@@ -126,8 +136,80 @@ export function throwGeminiError(text = "") {
 
 				<h2>出现其它未知报错无法解决请在群内(433695739)提问</h2>
 			`, POPUP_TYPE.TEXT, "", {
-        large: true,
-        wide: true,
-        allowVerticalScrolling: true,
-    });
+		large: true,
+		wide: true,
+		allowVerticalScrolling: true,
+	});
+}
+
+export async function initGeminiModels(secrets: Record<string, string> = {}) {
+	if (!secrets) {
+		return;
+	}
+	const modelStr = JSON.parse(secrets.models_makersuite ?? "[]") as Model[];
+	const api_key = secrets.api_key_makersuite ?? "";
+	console.log("ZerxzLib init");
+	const optgroup = $("#model_google_select > optgroup");
+	console.log("optgroup", optgroup);
+	const primaryVersions = optgroup[0];
+	const subVersions = optgroup[1];
+	console.log("subVersions", subVersions);
+	const subVersionsArray = Array.from(
+		subVersions.children,
+	) as HTMLOptionElement[];
+	const primaryVersionsArray = Array.from(
+		primaryVersions.children,
+	) as HTMLOptionElement[];
+	console.log("subVersionsArray", subVersionsArray);
+	const subVersionsValues = subVersionsArray.map((el) => el.value);
+	const primaryVersionsValues = primaryVersionsArray.map((el) => el.value);
+	const originalVersions = [
+		...primaryVersionsValues,
+		...subVersionsValues,
+	].flat();
+	const cachedVersions = modelStr.map((model) => model.model);
+	// 判断是否初次加载
+	if (modelStr.length > 0) {
+		for (const model of modelStr) {
+			if (originalVersions.includes(model.model)) {
+				continue;
+			}
+			const option = document.createElement("option");
+			option.value = model.model;
+			option.text = `${model.name}(${model.model})`;
+			subVersions.appendChild(option);
+		}
+	}
+	const geminiModels = await getGeminiModel(api_key);
+	console.log("geminiModels", geminiModels);
+	const geminiModelOptions = geminiModels.filter(
+		(model) =>
+			!originalVersions.includes(model.model) &&
+			!cachedVersions.includes(model.model),
+	);
+
+	if (geminiModelOptions.length === 0) {
+		console.log("没有新的模型");
+	} else {
+		console.log("geminiModelOptions", geminiModelOptions);
+		for (const model of geminiModelOptions) {
+			const option = document.createElement("option");
+			option.value = model.model;
+			option.text = `${model.name}(${model.model})`;
+			subVersions.appendChild(option);
+		}
+		saveKey("models_makersuite", JSON.stringify(geminiModelOptions));
+	}
+	const uniqueModels = new Set([...originalVersions, ...cachedVersions, ...geminiModelOptions.map((model) => model.model)]);
+	if (isGeminiSource() && !!secrets.api_key_makersuite_model) {
+		if (!uniqueModels.has(secrets.api_key_makersuite_model)) {
+			return
+		}
+		oai_settings.google_model = secrets.api_key_makersuite_model;
+		$('#model_google_select').val(oai_settings.google_model);
+		$(`#model_google_select option[value="${oai_settings.google_model}"`)
+			// @ts-ignore
+			.attr('selected', true);
+	}
+
 }

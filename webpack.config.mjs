@@ -81,10 +81,15 @@ export default {
                         presets: [
 
                             ['@babel/preset-env', {}],
-                            ['@babel/preset-typescript', {}],
-                            ['@babel/preset-react', { runtime: 'automatic' }],
+                            ['@babel/preset-typescript', { allowDeclareFields: true }],
 
                         ],
+                        plugins: [
+                            //     // ['@babel/plugin-proposal-class-properties', {}],
+                            //     ['@babel/plugin-proposal-decorators', { decoratorsBeforeExport: true, version: "2023-11" }],
+                            //     ["@babel/plugin-transform-class-properties", { "loose": true }],
+                            // "@babel/plugin-transform-typescript"
+                        ]
                     },
                 },
             },
