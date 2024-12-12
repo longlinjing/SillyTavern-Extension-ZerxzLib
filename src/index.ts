@@ -1,26 +1,11 @@
 import {
 	eventSource,
 	event_types,
-} from "@silly-tavern/script";;
-import {
-	writeSecret,
-} from "@silly-tavern/scripts/secrets";
+} from "@silly-tavern/script";
 import { getGeminiModel, getSecrets, isGeminiSource, saveKey, switchSecretsFromArray, throwGeminiError, STATE, CUSTOM_KEY, initGeminiModels, initToastr } from "./utils";
 
 import { GeminiLayouts } from "layouts/GeminiLayouts";
 
-
-
-async function createButton(title: string, onClick: () => void) {
-	const div = document.createElement("div");
-	div.classList.add("menu_button", "menu_button_icon", "interactable");
-	div.title = title;
-	div.onclick = onClick;
-	const span = document.createElement("span");
-	span.textContent = title;
-	div.appendChild(span);
-	return div;
-}
 
 ; (async () => {
 	initToastr();
