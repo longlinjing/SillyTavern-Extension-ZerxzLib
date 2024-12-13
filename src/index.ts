@@ -4,7 +4,9 @@ import {
 } from "@silly-tavern/script";
 import { getGeminiModel, getSecrets, isGeminiSource, saveKey, switchSecretsFromArray, throwGeminiError, STATE, CUSTOM_KEY, initGeminiModels, initToastr } from "./utils";
 
-import { GeminiLayouts } from "layouts/GeminiLayouts";
+import "./layouts/GeminiLayouts";
+// import "./layouts/HtmlInjector";
+import type { GeminiLayouts } from "./layouts/GeminiLayouts";
 
 
 ; (async () => {
@@ -15,13 +17,25 @@ import { GeminiLayouts } from "layouts/GeminiLayouts";
 	const secrets = (await getSecrets()) ?? {};
 	await initGeminiModels(secrets);
 	const form = $("#makersuite_form")[0];
-	form.appendChild(new GeminiLayouts({
-		currentKey: secrets.api_key_makersuite,
-		lastKey: secrets[CUSTOM_KEY]?.split("\n").pop(),
-		throwGeminiErrorState: STATE.throwGeminiErrorState,
-		switchKeyMakerSuite: STATE.switchState,
-		apiKeys: secrets[CUSTOM_KEY] || ""
-	}));
+	console.log("secrets", secrets);
+	const geminiLayout = document.createElement("gemini-layouts") as GeminiLayouts;
+	geminiLayout.currentKey = secrets.api_key_makersuite
+	geminiLayout.lastKey = secrets[CUSTOM_KEY]?.split("\n").pop() || ""
+	geminiLayout.throwGeminiErrorState = STATE.throwGeminiErrorState
+	geminiLayout.switchKeyMakerSuite = STATE.switchState
+	geminiLayout.apiKeys = secrets[CUSTOM_KEY] || ""
+
+	form.appendChild(geminiLayout);
+	// const settingsPanel = document.createElement("settings-panel");
+	// settingsPanel.id = 'html-injector-settings';
+	// settingsPanel.classList.add('drawer');
+	// // settingsPanel.style.display = 'none';
+	// console.log("settingsPanel", settingsPanel);
+	// document.body.appendChild(settingsPanel);
+	// const edgeControls = document.createElement("edge-controls");
+	// edgeControls.id = 'html-injector-edge-controls';
+	// document.body.appendChild(edgeControls);
+
 	eventSource.on(
 		event_types.CHAT_COMPLETION_SETTINGS_READY,
 		switchSecretsFromArray,

@@ -4,7 +4,7 @@
 	"requires": [],
 	"optional": [],
 	"js": "dist/zerxzLib.js",
-	"css": "",
+	"css": "index.css",
 	"author": "ZerxZ",
 	"version": "0.0.2",
 	"homePage": "https://github.com/ZerxZ/SillyTavern-Extension-ZerxzLib",

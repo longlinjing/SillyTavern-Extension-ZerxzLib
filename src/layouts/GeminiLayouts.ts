@@ -1,7 +1,7 @@
 import { LitElement, css, html } from 'lit';
+import { repeat } from 'lit/directives/repeat.js';
 import { CUSTOM_KEY, getSecrets, initGeminiModels, saveKey, STATE, throwGeminiError, } from '../utils';
 import {
-    updateSecretDisplay,
     writeSecret,
 } from "@silly-tavern/scripts/secrets";
 interface GeminiLayoutsOption {
@@ -11,42 +11,62 @@ interface GeminiLayoutsOption {
     switchKeyMakerSuite: boolean;
     apiKeys: string;
 }
-export class GeminiLayouts extends LitElement {
+// `
+// <div class="menu_button menu_button_icon interactable" title="保存密钥" @click="${this.handleSaveKey}"><span>保存密钥</span></div>
+//             <div class="menu_button menu_button_icon interactable" title="获取新的模型" @click="${this.handleGetNewModel}"><span>获取新的模型</span></div>
+//             <div class="menu_button menu_button_icon interactable" title="切换密钥设置" @click="${this.handleSwitchKeyMakerSuite}"><span>切换密钥设置</span></div>
+//             <div class="menu_button menu_button_icon interactable" title="查看报错原因" @click="${this.handleThrowGeminiError}"><span>查看报错原因</span></div>
+//             <div class="menu_button menu_button_icon interactable" title="报错开关" @click="${this.handleSwitchGeminiError}"><span>报错开关</span></div>
+// `
+class GeminiLayouts extends LitElement {
     static properties = {
         currentKey: { type: String, reflect: true },
         lastKey: { type: String, reflect: true },
         throwGeminiErrorState: { type: Boolean, reflect: true },
         switchKeyMakerSuite: { type: Boolean, reflect: true },
-        apiKeys: { type: String, reflect: true }
+        apiKeys: { type: String, reflect: true },
     }
     declare currentKey: string;
     declare lastKey: string;
     declare throwGeminiErrorState: boolean;
     declare switchKeyMakerSuite: boolean;
     declare apiKeys: string;
-    constructor(option: Partial<GeminiLayoutsOption> = {}) {
-
+    constructor() {
         super();
-        const { currentKey, lastKey, throwGeminiErrorState, switchKeyMakerSuite, apiKeys } = Object.assign({
-            currentKey: "",
-            lastKey: "",
-            throwGeminiErrorState: false,
-            switchKeyMakerSuite: false,
-            apiKeys: ""
-        }, option);
-        this.currentKey = currentKey;
-        this.lastKey = lastKey;
-        this.throwGeminiErrorState = throwGeminiErrorState;
-        this.switchKeyMakerSuite = switchKeyMakerSuite;
-        this.apiKeys = apiKeys;
+        this.currentKey = "";
+        this.lastKey = "";
+        this.throwGeminiErrorState = false;
+        this.switchKeyMakerSuite = false;
+        this.apiKeys = "";
     }
     protected createRenderRoot(): HTMLElement | DocumentFragment {
         return this;
     }
-
     render() {
         console.log('GeminiLayouts render');
-
+        console.log("this", this);
+        const buttons = [
+            {
+                name: "保存密钥",
+                handle: this.handleSaveKey
+            },
+            {
+                name: "获取新的模型",
+                handle: this.handleGetNewModel
+            },
+            {
+                name: "切换密钥设置",
+                handle: this.handleSwitchKeyMakerSuite
+            },
+            {
+                name: "查看报错原因",
+                handle: this.handleThrowGeminiError
+            },
+            {
+                name: "报错开关",
+                handle: this.handleSwitchGeminiError
+            }
+        ]
         return html`
         <div>
             <h4>密钥调用信息:</h4>
@@ -61,11 +81,12 @@ export class GeminiLayouts extends LitElement {
             id="api_key_makersuite_custom" style="height: 100px;" @change=${this.handleTextareaInput} .value=${this.apiKeys}></textarea>
         </div>
         <div class="flex-container flex">
-            <div class="menu_button menu_button_icon interactable" title="保存密钥" @click="${this.handleSaveKey}"><span>保存密钥</span></div>
-            <div class="menu_button menu_button_icon interactable" title="获取新的模型" @click="${this.handleGetNewModel}"><span>获取新的模型</span></div>
-            <div class="menu_button menu_button_icon interactable" title="切换密钥设置" @click="${this.handleSwitchKeyMakerSuite}"><span>切换密钥设置</span></div>
-            <div class="menu_button menu_button_icon interactable" title="查看报错原因" @click="${this.handleThrowGeminiError}"><span>查看报错原因</span></div>
-            <div class="menu_button menu_button_icon interactable" title="报错开关" @click="${this.handleSwitchGeminiError}"><span>报错开关</span></div>
+        ${repeat(
+            buttons,
+            ({ name }) => name,
+            ({ name, handle }) => html`
+                                    <div class="menu_button menu_button_icon interactable" title="${name}" @click="${handle}"><span>${name}</span></div>`,
+        )}
         </div>
         <hr>
         `;
@@ -125,5 +146,6 @@ export class GeminiLayouts extends LitElement {
         this.throwGeminiErrorState = STATE.throwGeminiErrorState;
     }
 }
-customElements.define('gemini-layouts', GeminiLayouts);
 
+customElements.define('gemini-layouts', GeminiLayouts);
+export { GeminiLayouts };
