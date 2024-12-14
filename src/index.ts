@@ -5,13 +5,13 @@ import {
 import { getGeminiModel, getSecrets, isGeminiSource, saveKey, switchSecretsFromArray, throwGeminiError, STATE, CUSTOM_KEY, initGeminiModels, initToastr } from "./utils";
 
 import "./layouts/GeminiLayouts";
-// import "./layouts/HtmlInjector";
+import { initInjector } from "layouts/HtmlInjector";
 import type { GeminiLayouts } from "./layouts/GeminiLayouts";
 
 
 ; (async () => {
 	initToastr();
-
+	// initInjector();
 
 	// 获取form元素 id为"makersuite_form"的元素 用jquery的选择器
 	const secrets = (await getSecrets()) ?? {};
@@ -26,15 +26,6 @@ import type { GeminiLayouts } from "./layouts/GeminiLayouts";
 	geminiLayout.apiKeys = secrets[CUSTOM_KEY] || ""
 
 	form.appendChild(geminiLayout);
-	// const settingsPanel = document.createElement("settings-panel");
-	// settingsPanel.id = 'html-injector-settings';
-	// settingsPanel.classList.add('drawer');
-	// // settingsPanel.style.display = 'none';
-	// console.log("settingsPanel", settingsPanel);
-	// document.body.appendChild(settingsPanel);
-	// const edgeControls = document.createElement("edge-controls");
-	// edgeControls.id = 'html-injector-edge-controls';
-	// document.body.appendChild(edgeControls);
 
 	eventSource.on(
 		event_types.CHAT_COMPLETION_SETTINGS_READY,

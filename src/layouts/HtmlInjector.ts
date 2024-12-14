@@ -1,96 +1,69 @@
 import { LitElement, html, css, type PropertyDeclarations } from 'lit';
-// class HtmlInjector extends LitElement {
-//     static properties = {
-//         isInjectionEnabled: { type: Boolean },
-//         displayMode: { type: Number },
-//         lastMesTextContent: { type: String },
-//         activationMode: { type: String },
-//         customStartFloor: { type: Number },
-//         customEndFloor: { type: Number },
-//         savedPosition: { type: String },
-//         isEdgeControlsCollapsed: { type: Boolean },
-//     };
-//     declare isInjectionEnabled: boolean;
-//     declare displayMode: number;
-//     declare lastMesTextContent: string;
-//     declare activationMode: string;
-//     declare customStartFloor: number;
-//     declare customEndFloor: number;
-//     declare savedPosition: string;
-//     declare isEdgeControlsCollapsed: boolean;
-//     constructor() {
-//         super();
-//         this.isInjectionEnabled = false;
-//         this.lastMesTextContent = '';
-//         this.displayMode = Number.parseInt(localStorage.getItem('displayMode') || '1');
-//         this.activationMode = localStorage.getItem('activationMode') || 'all';
-//         this.customStartFloor = Number.parseInt(localStorage.getItem('customStartFloor') || '1');
-//         this.customEndFloor = Number.parseInt(localStorage.getItem('customEndFloor') || '-1');
-//         this.savedPosition = localStorage.getItem('edgeControlsPosition') || 'top-right';
-//         this.isEdgeControlsCollapsed = localStorage.getItem('isEdgeControlsCollapsed') === 'true';
-//     }
-//     protected createRenderRoot(): HTMLElement | DocumentFragment {
-//         return this;
-//     }
-//     render() {
-//         console.log("HTMLInjector render");
-//         console.log('HTMLInjector', this);
-//         return html`
-//             <settings-panel id="settings-panel" .displayMode=${this.displayMode} class="drawer" ></settings-panel>
-//         `;
-//     }
+import { ref, createRef } from 'lit/directives/ref.js';
+import { SignalWatcher, signal } from '@lit-labs/signals';
+import { type StyleInfo, styleMap } from 'lit/directives/style-map.js';
+const isInjectionEnabled = signal(false);
+const displayMode = signal(Number.parseInt(localStorage.getItem('displayMode') || '1'));
+const lastMesTextContent = signal('');
+const activationMode = signal(localStorage.getItem('activationMode') || 'all');
+const customStartFloor = signal(Number.parseInt(localStorage.getItem('customStartFloor') || '1'));
+const customEndFloor = signal(Number.parseInt(localStorage.getItem('customEndFloor') || '-1'));
+const savedPosition = signal(localStorage.getItem('edgeControlsPosition') || 'top-right');
+const isEdgeControlsCollapsed = signal<boolean>(JSON.parse(localStorage.getItem('isEdgeControlsCollapsed') || "true") as boolean || true);
+const isVisibleSettingsPanel = signal<boolean>(JSON.parse(localStorage.getItem('isVisibleSettingsPanel') || "true") as boolean || true);
+const saveTopPosition = signal(localStorage.getItem('saveTopPosition'));
 
-// }
-
-class SettingsPanel extends LitElement {
+class SettingsPanel extends SignalWatcher(LitElement) {
     protected createRenderRoot(): HTMLElement | DocumentFragment {
         return this;
     }
-    static properties = {
-        displayMode: { type: Number }
-    };
-    declare displayMode: number;
-    constructor() {
-        super();
-        this.displayMode = Number.parseInt(localStorage.getItem('displayMode') || '1');
-    }
+    public customFloorSettingsRef = createRef<HTMLDivElement>();
+    public LastSettingsRef = createRef<HTMLDivElement>();
+    declare edgeControls: EdgeControls
     render() {
+        this.style.display = isVisibleSettingsPanel.get() ? 'none' : 'block';
+        this.classList.add('drawer');
         return html`
         <div id="html-injector-settings-header" class="inline-drawer-header">
                 <span class="inline-drawer-title">HTML注入器设置</span>
-                <div id="html-injector-close-settings" class="inline-drawer-icon fa-solid fa-circle-xmark"></div>
+                <div id="html-injector-close-settings" class="inline-drawer-icon fa-solid fa-circle-xmark" @click=${this.toggleSettingsPanel}></div>
             </div>
             <div id="settings-content">
                 <div class="settings-section">
                     <h3 class="settings-subtitle">边缘控制面板位置</h3>
-                    <select id="edge-controls-position" class="settings-select theme-element">
-                    <option value="top-right">界面右上角</option>
-                    <option value="right-three-quarters">界面右侧3/4位置</option>
-                    <option value="right-middle">界面右侧中间</option>
+                <select id="edge-controls-position" class="settings-select theme-element" @change=${this.handleSavePositionChange}>
+                    <option value="top-right"            .selected=${savedPosition.get() === "top-right"}>界面右上角</option>
+                    <option value="right-three-quarters" .selected=${savedPosition.get() === "right-three-quarters"}>界面右侧3/4位置</option>
+                    <option value="right-middle"         .selected=${savedPosition.get() === "right-middle"}>界面右侧中间</option>
+                    <option value="custom"               .selected=${savedPosition.get() === "custom"}>自定义位置</option>
                 </select>
                 </div>
                 <div class="settings-section">
                 <h3 class="settings-subtitle">显示模式</h3>
-                <label class="settings-option"><input type="radio" name="display-mode" value="1" ${this.displayMode === 1 ? 'checked' : ''}> 原代码和注入效果一起显示</label>
-                <label class="settings-option"><input type="radio" name="display-mode" value="2" ${this.displayMode === 2 ? 'checked' : ''}> 原代码以摘要形式显示</label>
-                <label class="settings-option"><input type="radio" name="display-mode" value="3" ${this.displayMode === 3 ? 'checked' : ''}> 隐藏原代码，只显示注入效果</label>
+                <label class="settings-option"><input type="radio" name="display-mode" value="1" .checked=${displayMode.get() === 1} @change=${this.handleDisplayModeChange}> 原代码和注入效果一起显示</label>
+                <label class="settings-option"><input type="radio" name="display-mode" value="2" .checked=${displayMode.get() === 2} @change=${this.handleDisplayModeChange}> 原代码以摘要形式显示</label>
+                <label class="settings-option"><input type="radio" name="display-mode" value="3" .checked=${displayMode.get() === 3} @change=${this.handleDisplayModeChange}> 隐藏原代码，只显示注入效果</label>
             </div>
                 <div class="settings-section">
                     <h3 class="settings-subtitle">激活楼层</h3>
-                    <select id="activation-mode" class="settings-select theme-element">
-                        <option value="all">全部楼层</option>
-                        <option value="first">第一层</option>
-                        <option value="last">最后一层</option>
-                        <option value="lastN">最后N层</option>
-                        <option value="custom">自定义楼层</option>
+                    <select id="activation-mode" class="settings-select theme-element" @change=${this.handleActivationModeChange} >
+                        <option value="all" .selected=${activationMode.get() === "all"}>全部楼层</option>
+                        <option value="first"  .selected=${activationMode.get() === "first"}>第一层</option>
+                        <option value="last"   .selected=${activationMode.get() === "last"}>最后一层</option>
+                        <option value="lastN"  .selected=${activationMode.get() === "lastN"}>最后N层</option>
+                        <option value="custom" .selected=${activationMode.get() === "custom"}>自定义楼层</option>
                     </select>
-                    <div id="custom-floor-settings" class="settings-subsection" style="display: none;">
-                        <label class="settings-option">起始楼层: <input type="number" id="custom-start-floor" min="1" value="1"></label>
-                        <label class="settings-option">结束楼层: <input type="number" id="custom-end-floor" min="-1" value="-1"></label>
+                    <div id="custom-floor-settings" class="settings-subsection" style=${styleMap({
+            display: activationMode.get() === 'custom' ? 'block' : 'none'
+        })} ${ref(this.customFloorSettingsRef)}>
+                        <label class="settings-option">起始楼层: <input type="number" id="custom-start-floor" min="1" value="1" @change=${this.handleCustomStartFloorChange}></label>
+                        <label class="settings-option">结束楼层: <input type="number" id="custom-end-floor" min="-1" value="-1" @change=${this.handleCustomEndFloorChange}></label>
                         <p class="settings-note">（-1 表示最后一层）</p>
                     </div>
-                    <div id="last-n-settings" class="settings-subsection" style="display: none;">
-                        <label class="settings-option">最后 <input type="number" id="last-n-floors" min="1" value="1"> 层</label>
+                    <div id="last-n-settings" class="settings-subsection" style=${styleMap({
+            display: activationMode.get() === 'lastN' ? 'block' : 'none'
+        })} ${ref(this.LastSettingsRef)} >
+                        <label class="settings-option">最后 <input type="number" id="last-n-floors" min="1" value="1"  @change=${this.handleLastNFloorsChange}> 层</label>
                     </div>
                 </div>
             </div>
@@ -116,46 +89,124 @@ class SettingsPanel extends LitElement {
             </div>
         `
     }
-}
-class EdgeControls extends LitElement {
-    static properties: PropertyDeclarations = {
-        isEdgeControlsCollapsed: { type: Boolean },
-        toggleButtonText: { type: String }
+    handleActivationModeChange(event: Event) {
+        const target = event.target as HTMLSelectElement;
+        const value = target.value;
+        activationMode.set(value);
+        localStorage.setItem('activationMode', value);
+        this.updateInjection();
     }
-    declare isEdgeControlsCollapsed: boolean;
-    declare toggleButtonText: string;
+    handleSavePositionChange(event: Event) {
+        const target = event.target as HTMLSelectElement;
+        const value = target.value;
+        savedPosition.set(value);
+        localStorage.setItem('edgeControlsPosition', value);
+        this.edgeControls.updateEdgeControlsPosition(value);
+    }
+    handleCustomStartFloorChange(event: Event) {
+        const target = event.target as HTMLInputElement;
+        const value = Number.parseInt(target.value);
+        customStartFloor.set(value);
+        localStorage.setItem('customStartFloor', value.toString());
+        this.updateInjection();
+    }
+
+    handleCustomEndFloorChange(event: Event) {
+        const target = event.target as HTMLInputElement;
+        const value = Number.parseInt(target.value);
+        customEndFloor.set(value);
+        localStorage.setItem('customEndFloor', value.toString());
+        this.updateInjection();
+    }
+    handleLastNFloorsChange(event: Event) {
+        const target = event.target as HTMLInputElement;
+        const value = Number.parseInt(target.value);
+        customEndFloor.set(value);
+        localStorage.setItem('customEndFloor', value.toString());
+        this.updateInjection();
+    }
+    handleDisplayModeChange(event: Event) {
+        const target = event.target as HTMLInputElement;
+        const value = Number.parseInt(target.value);
+        displayMode.set(value);
+        localStorage.setItem('displayMode', value.toString());
+        this.updateInjection();
+    }
+    toggleSettingsPanel(event: Event) {
+        const isVisible = this.style.display === 'block';
+        this.style.display = isVisible ? 'none' : 'block';
+        isVisibleSettingsPanel.set(isVisible);
+        localStorage.setItem('isVisibleSettingsPanel', (!isVisible).toString());
+    }
+    updateInjection() {
+        if (!isInjectionEnabled.get()) {
+            return
+        }
+    }
+}
+class EdgeControls extends SignalWatcher(LitElement) {
+    static properties: PropertyDeclarations = {
+        settingsPanel: { type: Object },
+        toggleEdgeButtonStyle: { type: Object },
+        isDragging: { type: Boolean },
+        startY: { type: Number },
+        startTop: { type: Number },
+        newTop: { type: Number }
+    }
+    public declare settingsPanel: SettingsPanel;
+    public declare toggleEdgeButtonStyle: StyleInfo;
+    public declare isDragging: boolean;
+    public declare startY: number;
+    public declare startTop: number;
+    public newTop: number
     constructor() {
         super();
-        this.isEdgeControlsCollapsed = localStorage.getItem('isEdgeControlsCollapsed') === 'true';
-        this.toggleButtonText = this.isEdgeControlsCollapsed ? '<<' : '>>';
+        this.toggleEdgeButtonStyle = {
+            position: 'absolute',
+            left: '-20px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            backgroundColor: 'var(--SmartThemeBlurTintColor, rgba(22, 11, 18, 0.73))',
+            color: 'var(--SmartThemeBodyColor, rgba(220, 220, 210, 1))',
+            border: '1px solid var(--SmartThemeBorderColor, rgba(217, 90, 157, 0.5))',
+            borderRadius: '5px 0 0 5px',
+            cursor: 'pointer',
+            padding: '5px',
+            userSelect: 'none',
+            fontSize: '12px',
+            height: '60px',
+        }
+        this.isDragging = false;
+        this.startY = 0;
+        this.startTop = 0;
+        this.newTop = 0;
+
     }
     protected createRenderRoot(): HTMLElement | DocumentFragment {
         return this;
     }
+    connectedCallback() {
+        super.connectedCallback();
+        document.addEventListener('mousemove', this.handleDragMove.bind(this));
+        // @ts-ignore
+        document.addEventListener('mouseup', this.handleDragEnd.bind(this));
+        document.addEventListener('touchmove', this.handleDragMove.bind(this));
+        // @ts-ignore
+        document.addEventListener('touchend', this.handleDragEnd.bind(this));
+    }
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        document.removeEventListener('mousemove', this.handleDragMove.bind(this));
+        // @ts-ignore
+        document.removeEventListener('mouseup', this.handleDragEnd.bind(this));
+        document.removeEventListener('touchmove', this.handleDragMove.bind(this));
+        // @ts-ignore
+        document.removeEventListener('touchend', this.handleDragEnd.bind(this));
+    }
     protected render(): unknown {
-        const toggleEdgeControlsButton = html`
-            <button id="toggle-edge-controls" style="
-            position: absolute;
-            left: -20px;
-            top: 50%;
-            transform: translateY(-50%);
-            background-color: var(--SmartThemeBlurTintColor, rgba(22, 11, 18, 0.73));
-            color: var(--SmartThemeBodyColor, rgba(220, 220, 210, 1));
-            border: 1px solid var(--SmartThemeBorderColor, rgba(217, 90, 157, 0.5));
-            border-radius: 5px 0 0 5px;
-            cursor: pointer;
-            padding: 5px;
-            user-select: none;
-            font-size: 12px;
-            height: 60px;
-            "
-            @click=${this.handleToggleEdgeControls}
-            >
-            ${this.toggleButtonText}
-            </button>
-        `;
+        // this.updateEdgeControlsPosition(savedPosition.get());
         return html`
-            <div id="html-injector-drag-handle">
+            <div id="html-injector-drag-handle" @mousedown=${this.handleDragStart} @touchstart=${this.handleDragStart}>
                 <div class="drag-dots">
                 ${Array.from({ length: 3 }).map(() => html`
                     <div style="display: flex; flex-direction: column; justify-content: space-between; height: 15px;">
@@ -167,27 +218,105 @@ class EdgeControls extends LitElement {
                 </div>
             </div>
             <label class="html-injector-switch">
-                <input type="checkbox" id="edge-injection-toggle">
+                <input type="checkbox" id="edge-injection-toggle" @change=${this.handleToggleChange}>
                 <span class="html-injector-slider"></span>
             </label>
-            <button id="html-injector-toggle-panel" class="html-injector-button menu_button">显示面板</button>
-            ${toggleEdgeControlsButton}
+            <button id="html-injector-toggle-panel" class="html-injector-button menu_button" @click=${this.toggleSettingsPanel}>${isVisibleSettingsPanel.get() ? "显示面板" : "隐藏面板"}</button>
+            <button id="toggle-edge-controls" style=${styleMap(this.toggleEdgeButtonStyle)}
+            @click=${this.handleToggleEdgeControls}
+            >
+            ${isEdgeControlsCollapsed.get() ? '<<' : '>>'}
+            </button>
 `
     }
-    handleToggleEdgeControls() {
-        this.isEdgeControlsCollapsed = !this.isEdgeControlsCollapsed;
-        this.style.right = this.isEdgeControlsCollapsed ? '-100px' : '0';
-        this.toggleButtonText = this.isEdgeControlsCollapsed ? '<<' : '>>';
-        localStorage.setItem('isEdgeControlsCollapsed', this.isEdgeControlsCollapsed.toString());
-        this.requestUpdate();
+    handleDragStart(e: DragEvent | MouseEvent | TouchEvent) {
+        this.isDragging = true;
+        this.startY = e.type.includes('mouse') ? (e as MouseEvent).clientY : (e as unknown as TouchEvent).touches[0].clientY;
+        this.startTop = this.getBoundingClientRect().top;
+        e.preventDefault();
+    }
+    handleDragMove(event: DragEvent | MouseEvent | TouchEvent) {
+        if (!this.isDragging) {
+            return;
+        }
+        const clientY = event.type.includes('mouse') ? (event as MouseEvent).clientY : (event as unknown as TouchEvent).touches[0].clientY;
+        let newTop = this.startTop + (clientY - this.startY);
+        newTop = Math.max(0, Math.min(newTop, window.innerHeight - this.offsetHeight));
+        this.newTop = newTop;
+        this.style.top = `${newTop}px`;
+
+    }
+    handleDragEnd(event: DragEvent) {
+        this.isDragging = false;
+        if (activationMode.get() === 'custom') {
+            saveTopPosition.set(this.newTop.toString());
+            localStorage.setItem(
+                "saveTopPosition",
+                this.newTop.toString(),
+            );
+        }
+    }
+
+
+
+    handleToggleEdgeControls(event: Event) {
+        isEdgeControlsCollapsed.set(!isEdgeControlsCollapsed.get());
+        const value = isEdgeControlsCollapsed.get();
+        this.style.right = value ? '-100px' : '0';
+        localStorage.setItem('isEdgeControlsCollapsed', value.toString());
+    }
+    handleToggleChange(event: Event) {
+        const target = event.target as HTMLInputElement;
+        isInjectionEnabled.set(target.checked);
+        if (isInjectionEnabled.get()) {
+
+        } else {
+
+        }
+
+    }
+    toggleSettingsPanel(event: Event) {
+        this.settingsPanel.toggleSettingsPanel(event);
+    }
+    updatePosition() {
+        this.updateEdgeControlsPosition(savedPosition.get());
+    }
+    updateEdgeControlsPosition(position: string) {
+        switch (position) {
+            case 'top-right':
+                this.style.top = '20vh';
+                this.style.transform = 'none';
+                break;
+            case 'right-three-quarters':
+                this.style.top = '75vh';
+                this.style.transform = 'none';
+                break;
+            case 'right-middle':
+                this.style.top = '50%';
+                this.style.transform = 'translateY(-50%)';
+                break;
+            case 'custom':
+                this.style.top = saveTopPosition.get() ? `${saveTopPosition.get()}px` : "20vh";
+                this.style.transform = 'none';
+                break;
+        }
+        this.style.right = isEdgeControlsCollapsed.get() ? '-100px' : '0';
     }
 }
 
 
-
-
-// customElements.define('html-injector', HtmlInjector);
 customElements.define('settings-panel', SettingsPanel);
 customElements.define('edge-controls', EdgeControls);
-
-// export { HtmlInjector };
+export function initInjector() {
+    const settingsPanel = document.createElement('settings-panel') as SettingsPanel;
+    const edgeControls = document.createElement('edge-controls') as EdgeControls;
+    settingsPanel.id = 'html-injector-settings';
+    edgeControls.id = 'html-injector-edge-controls';
+    settingsPanel.edgeControls = edgeControls;
+    edgeControls.settingsPanel = settingsPanel;
+    document.body.appendChild(settingsPanel);
+    document.body.appendChild(edgeControls);
+    window.addEventListener("resize", () => {
+        edgeControls.updatePosition();
+    })
+}
