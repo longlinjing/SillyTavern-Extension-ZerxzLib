@@ -11,7 +11,7 @@ import type { GeminiLayouts } from "./layouts/GeminiLayouts";
 
 ; (async () => {
 	initToastr();
-	// initInjector();
+	initInjector();
 
 	// 获取form元素 id为"makersuite_form"的元素 用jquery的选择器
 	const secrets = (await getSecrets()) ?? {};

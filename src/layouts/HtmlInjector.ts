@@ -1,18 +1,322 @@
-import { LitElement, html, css, type PropertyDeclarations } from 'lit';
+import { LitElement, html, type PropertyDeclarations } from 'lit';
 import { ref, createRef } from 'lit/directives/ref.js';
-import { SignalWatcher, signal } from '@lit-labs/signals';
+import { SignalWatcher, signal, watch } from '@lit-labs/signals';
 import { type StyleInfo, styleMap } from 'lit/directives/style-map.js';
 const isInjectionEnabled = signal(false);
-const displayMode = signal(Number.parseInt(localStorage.getItem('displayMode') || '1'));
+const displayMode = signal(1);
 const lastMesTextContent = signal('');
-const activationMode = signal(localStorage.getItem('activationMode') || 'all');
-const customStartFloor = signal(Number.parseInt(localStorage.getItem('customStartFloor') || '1'));
-const customEndFloor = signal(Number.parseInt(localStorage.getItem('customEndFloor') || '-1'));
-const savedPosition = signal(localStorage.getItem('edgeControlsPosition') || 'top-right');
-const isEdgeControlsCollapsed = signal<boolean>(JSON.parse(localStorage.getItem('isEdgeControlsCollapsed') || "true") as boolean || true);
-const isVisibleSettingsPanel = signal<boolean>(JSON.parse(localStorage.getItem('isVisibleSettingsPanel') || "true") as boolean || true);
-const saveTopPosition = signal(localStorage.getItem('saveTopPosition'));
+const activationMode = signal('all');
+const customStartFloor = signal(1);
+const customEndFloor = signal(-1);
+const savedPosition = signal('top-right');
+const isEdgeControlsCollapsed = signal<boolean>(true);
+const isVisibleSettingsPanel = signal<boolean>(true);
+const saveTopPosition = signal('');
+const chatElement = $<HTMLDivElement>('#chat');
+const observer = new MutationObserver((mutations, _observer) => {
+    for (const mutation of mutations) {
+        if (mutation.type !== 'childList') {
+            continue;
+        }
+        for (const node of Array.from(mutation.addedNodes)) {
+            if (node.nodeType === Node.ELEMENT_NODE &&
+                node instanceof HTMLElement && (
+                    node.classList.contains('mes_text') ||
+                    node.querySelector('.mes_text')
+                )) {
+                if (isInjectionEnabled.get()) {
+                    injectHtmlCode();
+                }
 
+                break;
+            }
+        }
+    }
+});
+
+const getIframeSrcContent = (htmlContent: string) => `
+<html>
+    <head>
+        <style>
+            /* 自定义样式 */
+            ::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
+            ::-webkit-scrollbar-track {
+                background: rgba(0, 0, 0, 0.1);
+                border-radius: 4px;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: rgba(0, 0, 0, 0.3);
+                border-radius: 4px;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+                background: rgba(0, 0, 0, 0.5);
+            }
+            [data-theme="dark"] ::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.1);
+            }
+            [data-theme="dark"] ::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.3);
+            }
+            [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+                background: rgba(255, 255, 255, 0.5);
+            }
+            .container[data-theme="light"] {
+                --bg-color: rgba(240, 240, 255, 0.1);
+                --text-color: #1e1e1e;
+                --border-color: rgba(139,226,115,0.3);
+                --nav-bg-color: rgba(240,240,255,0.4);
+            }
+            .container[data-theme="dark"] {
+                --bg-color: rgba(40, 40, 40, 0.2);
+                --text-color: #e0e0e0;
+                --border-color: rgba(74,74,74,0.3);
+                --nav-bg-color: rgba(30,30,30,0.4);
+            }
+            .container {
+                background-color: var(--bg-color);
+                color: var(--text-color);
+            }
+            .container .left-nav {
+                background-color: var(--nav-bg-color);
+            }
+            .container .button, .container .left-nav .section {
+                border: 1px solid var(--border-color);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="theme-content">
+            ${htmlContent}
+        </div>
+        <script>
+            window.addEventListener('load', function() {
+                window.parent.postMessage('loaded', '*');
+                const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+                function handleThemeChange(e) {
+                    document.body.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+                    window.parent.postMessage({type: 'themeChange', theme: e.matches ? 'dark' : 'light'}, '*');
+                }
+                darkModeMediaQuery.addListener(handleThemeChange);
+                handleThemeChange(darkModeMediaQuery);
+                document.querySelectorAll('.qr-button').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const buttonName = this.textContent.trim();
+                        window.parent.postMessage({type: 'buttonClick', name: buttonName}, '*');
+                    });
+                });
+                document.querySelectorAll('.st-text').forEach(textarea => {
+                    textarea.addEventListener('input', function() {
+                        window.parent.postMessage({type: 'textInput', text: this.value}, '*');
+                    });
+                    textarea.addEventListener('change', function() {
+                        window.parent.postMessage({type: 'textInput', text: this.value}, '*');
+                    });
+                    const observer = new MutationObserver((mutations) => {
+                        mutations.forEach((mutation) => {
+                            if (mutation.type === 'attributes' && mutation.attributeName === 'value') {
+                                window.parent.postMessage({type: 'textInput', text: textarea.value}, '*');
+                            }
+                        });
+                    });
+                    observer.observe(textarea, { attributes: true });
+                });
+                document.querySelectorAll('.st-send-button').forEach(button => {
+                    button.addEventListener('click', function() {
+                        window.parent.postMessage({type: 'sendClick'}, '*');
+                    });
+                });
+            });
+            window.addEventListener('message', function(event) {
+                if (event.data.type === 'themeChange') {
+                    document.body.setAttribute('data-theme', event.data.theme);
+                }
+            });
+        </script>
+    </body>
+</html>
+                        `
+function injectHtmlCode(specificMesText = null as Element | null) {
+    console.log('injectHtmlCode');
+    try {
+        const mesTextElements = specificMesText ? [specificMesText] : Array.from(chatElement.find('.mes_text'));
+        let targetElements: Element[];
+        switch (activationMode.get()) {
+            case 'first':
+                targetElements = mesTextElements.slice(0, 1);
+                break;
+            case 'last':
+                targetElements = mesTextElements.slice(-1);
+                break;
+            case 'lastN':
+                targetElements = mesTextElements.slice(-customEndFloor);
+                break;
+            case 'custom': {
+                const start = customStartFloor.get() - 1;
+                const end = customEndFloor.get() === -1 ? undefined : customEndFloor.get();
+                targetElements = mesTextElements.slice(start, end);
+                break;
+            }
+            default: // 'all'
+                targetElements = mesTextElements;
+        }
+        for (const mesText of targetElements) {
+            const codeElements = mesText.getElementsByTagName('code');
+            for (const codeElement of Array.from(codeElements)) {
+                const htmlContent = codeElement.innerText.trim();
+                if (htmlContent.startsWith('<') && htmlContent.endsWith('>')) {
+                    const iframe = document.createElement('iframe');
+                    iframe.style.width = '100%';
+                    iframe.style.border = 'none';
+                    iframe.style.marginTop = '10px';
+                    iframe.srcdoc = getIframeSrcContent(htmlContent);
+                    if (displayMode.get() === 2) {
+                        const details = document.createElement('details');
+                        const summary = document.createElement('summary');
+                        summary.textContent = '[原代码]';
+                        details.appendChild(summary);
+                        codeElement?.parentNode?.insertBefore(details, codeElement);
+                        details.appendChild(codeElement);
+                    } else if (displayMode.get() === 3) {
+                        codeElement.style.display = 'none';
+                    }
+                    codeElement?.parentNode?.insertBefore(iframe, codeElement.nextSibling);
+                    iframe.onload = () => {
+                        adjustIframeHeight(iframe);
+                        setTimeout(() => adjustIframeHeight(iframe), 500);
+                    };
+                    if (iframe.contentWindow) {
+                        const resizeObserver = new ResizeObserver(() => adjustIframeHeight(iframe));
+                        resizeObserver.observe(iframe.contentWindow.document.body);
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error('HTML注入失败:', error);
+    }
+}
+function removeInjectedIframes() {
+    const iframes = document.querySelectorAll<HTMLIFrameElement>('.mes_text iframe');
+    // biome-ignore lint/complexity/noForEach: <explanation>
+    iframes.forEach(iframe => iframe.remove());
+    const codeElements = document.querySelectorAll<HTMLDivElement>('.mes_text code');
+    // biome-ignore lint/complexity/noForEach: <explanation>
+    codeElements.forEach(code => {
+        // @ts-ignore
+        code.style.display = '';
+        const details = code.closest('details');
+        if (details) {
+            details.parentNode?.insertBefore(code, details);
+            details.remove();
+        }
+    });
+}
+// ---------------------------------------- 辅助函数 ----------------------------------------
+function adjustIframeHeight(iframe: HTMLIFrameElement) {
+    try {
+        if (iframe.contentWindow?.document.body) {
+            const height = iframe.contentWindow.document.documentElement.scrollHeight;
+            iframe.style.height = `${height + 5}px`;
+        }
+    } catch (error) {
+        console.error('调整iframe高度失败:', error);
+    }
+}
+function getSystemTheme() {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+function updateAllIframesTheme() {
+    const iframes = document.querySelectorAll('.mes_text iframe');
+    // biome-ignore lint/complexity/noForEach: <explanation>
+    iframes.forEach(iframe => {
+        try {
+            // @ts-ignore
+            if (iframe.contentWindow) {
+                // @ts-ignore
+                iframe.contentWindow.postMessage({ type: 'themeChange', theme: getSystemTheme() }, '*');
+            }
+        } catch (error) {
+            console.error('更新iframe主题失败:', error);
+        }
+    });
+}
+
+function handleMessage(event: MessageEvent) {
+    try {
+        if (event.data === 'loaded') {
+            const iframes = document.querySelectorAll<HTMLIFrameElement>('.mes_text iframe');
+            // biome-ignore lint/complexity/noForEach: <explanation>
+            iframes.forEach(iframe => {
+                // @ts-ignore
+                if (iframe.contentWindow === event.source) {
+                    adjustIframeHeight(iframe);
+                }
+            });
+        } else if (event.data.type === 'buttonClick') {
+            const buttonName = event.data.name;
+            jQuery('.qr--button.menu_button').each(function () {
+                if (jQuery(this).find('.qr--button-label').text().trim() === buttonName) {
+                    jQuery(this).trigger('click');
+                    return false;
+                }
+            });
+        } else if (event.data.type === 'textInput') {
+            const sendTextarea = document.getElementById('send_textarea');
+            if (sendTextarea) {
+                // @ts-ignore
+                sendTextarea.value = event.data.text;
+                sendTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+                sendTextarea.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        } else if (event.data.type === 'sendClick') {
+            const sendButton = document.getElementById('send_but');
+            if (sendButton) {
+                sendButton.click();
+            }
+        }
+    } catch (error) {
+        console.error('处理消息失败:', error);
+    }
+}
+function checkLastMesTextChange() {
+    const mesTextElements = document.getElementsByClassName('mes_text');
+    if (mesTextElements.length > 0) {
+        const lastMesText = mesTextElements[mesTextElements.length - 1];
+        const codeElement = lastMesText.querySelector('code');
+        if (codeElement) {
+            const currentContent = codeElement.innerText.trim();
+            const injectedIframe = lastMesText.querySelector('iframe');
+            if (currentContent !== lastMesTextContent.get() || (isInjectionEnabled && !injectedIframe)) {
+                lastMesTextContent.set(currentContent);
+                if (isInjectionEnabled) {
+                    if (injectedIframe) {
+                        injectedIframe.remove();
+                    }
+                    // biome-ignore lint/style/noNonNullAssertion: <explanation>
+                    injectHtmlCode(lastMesText!);
+                    const newIframe = lastMesText.querySelector('iframe');
+                    if (newIframe) {
+                        newIframe.onload = () => {
+                            const currentTheme = getSystemTheme();
+                            newIframe?.contentWindow?.postMessage({ type: 'themeChange', theme: currentTheme }, '*');
+                        };
+                    }
+                }
+            }
+        } else {
+            if (lastMesTextContent.get() !== '') {
+                lastMesTextContent.set('');
+                const injectedIframe = lastMesText.querySelector('iframe');
+                if (injectedIframe) {
+                    injectedIframe.remove();
+                }
+            }
+        }
+    }
+}
 class SettingsPanel extends SignalWatcher(LitElement) {
     protected createRenderRoot(): HTMLElement | DocumentFragment {
         return this;
@@ -47,7 +351,7 @@ class SettingsPanel extends SignalWatcher(LitElement) {
                 <div class="settings-section">
                     <h3 class="settings-subtitle">激活楼层</h3>
                     <select id="activation-mode" class="settings-select theme-element" @change=${this.handleActivationModeChange} >
-                        <option value="all" .selected=${activationMode.get() === "all"}>全部楼层</option>
+                        <option value="all" .selected=   ${activationMode.get() === "all"}>全部楼层</option>
                         <option value="first"  .selected=${activationMode.get() === "first"}>第一层</option>
                         <option value="last"   .selected=${activationMode.get() === "last"}>最后一层</option>
                         <option value="lastN"  .selected=${activationMode.get() === "lastN"}>最后N层</option>
@@ -56,14 +360,14 @@ class SettingsPanel extends SignalWatcher(LitElement) {
                     <div id="custom-floor-settings" class="settings-subsection" style=${styleMap({
             display: activationMode.get() === 'custom' ? 'block' : 'none'
         })} ${ref(this.customFloorSettingsRef)}>
-                        <label class="settings-option">起始楼层: <input type="number" id="custom-start-floor" min="1" value="1" @change=${this.handleCustomStartFloorChange}></label>
-                        <label class="settings-option">结束楼层: <input type="number" id="custom-end-floor" min="-1" value="-1" @change=${this.handleCustomEndFloorChange}></label>
+                        <label class="settings-option">起始楼层: <input type="number" id="custom-start-floor" min="1" .value=${customStartFloor.get()} @change=${this.handleCustomStartFloorChange}></label>
+                        <label class="settings-option">结束楼层: <input type="number" id="custom-end-floor" min="-1" .value=${customEndFloor.get()} @change=${this.handleCustomEndFloorChange}></label>
                         <p class="settings-note">（-1 表示最后一层）</p>
                     </div>
                     <div id="last-n-settings" class="settings-subsection" style=${styleMap({
             display: activationMode.get() === 'lastN' ? 'block' : 'none'
         })} ${ref(this.LastSettingsRef)} >
-                        <label class="settings-option">最后 <input type="number" id="last-n-floors" min="1" value="1"  @change=${this.handleLastNFloorsChange}> 层</label>
+                        <label class="settings-option">最后 <input type="number" id="last-n-floors" min="1" .value=${customEndFloor.get()}  @change=${this.handleLastNFloorsChange}> 层</label>
                     </div>
                 </div>
             </div>
@@ -134,14 +438,16 @@ class SettingsPanel extends SignalWatcher(LitElement) {
     }
     toggleSettingsPanel(event: Event) {
         const isVisible = this.style.display === 'block';
-        this.style.display = isVisible ? 'none' : 'block';
+        this.style.display = isVisible ? 'block' : 'node';
         isVisibleSettingsPanel.set(isVisible);
-        localStorage.setItem('isVisibleSettingsPanel', (!isVisible).toString());
+        localStorage.setItem('isVisibleSettingsPanel', isVisible.toString());
     }
     updateInjection() {
         if (!isInjectionEnabled.get()) {
             return
         }
+        removeInjectedIframes();
+        injectHtmlCode();
     }
 }
 class EdgeControls extends SignalWatcher(LitElement) {
@@ -181,6 +487,7 @@ class EdgeControls extends SignalWatcher(LitElement) {
         this.startTop = 0;
         this.newTop = 0;
 
+
     }
     protected createRenderRoot(): HTMLElement | DocumentFragment {
         return this;
@@ -204,7 +511,10 @@ class EdgeControls extends SignalWatcher(LitElement) {
         document.removeEventListener('touchend', this.handleDragEnd.bind(this));
     }
     protected render(): unknown {
-        // this.updateEdgeControlsPosition(savedPosition.get());
+        console.log('render edge controls');
+        console.log('isInjectionEnabled', isInjectionEnabled.get());
+        console.log('isVisibleSettingsPanel', isVisibleSettingsPanel.get());
+        this.style.right = isEdgeControlsCollapsed.get() ? '-100px' : '0';
         return html`
             <div id="html-injector-drag-handle" @mousedown=${this.handleDragStart} @touchstart=${this.handleDragStart}>
                 <div class="drag-dots">
@@ -218,7 +528,7 @@ class EdgeControls extends SignalWatcher(LitElement) {
                 </div>
             </div>
             <label class="html-injector-switch">
-                <input type="checkbox" id="edge-injection-toggle" @change=${this.handleToggleChange}>
+                <input type="checkbox" id="edge-injection-toggle" @change=${this.handleToggleChange} .checked=${isInjectionEnabled.get()}>
                 <span class="html-injector-slider"></span>
             </label>
             <button id="html-injector-toggle-panel" class="html-injector-button menu_button" @click=${this.toggleSettingsPanel}>${isVisibleSettingsPanel.get() ? "显示面板" : "隐藏面板"}</button>
@@ -267,11 +577,13 @@ class EdgeControls extends SignalWatcher(LitElement) {
     }
     handleToggleChange(event: Event) {
         const target = event.target as HTMLInputElement;
-        isInjectionEnabled.set(target.checked);
-        if (isInjectionEnabled.get()) {
-
+        const isEnabled = target.checked;
+        console.log('isEnabled', isEnabled);
+        isInjectionEnabled.set(isEnabled);
+        if (isEnabled) {
+            injectHtmlCode();
         } else {
-
+            removeInjectedIframes();
         }
 
     }
@@ -296,7 +608,8 @@ class EdgeControls extends SignalWatcher(LitElement) {
                 this.style.transform = 'translateY(-50%)';
                 break;
             case 'custom':
-                this.style.top = saveTopPosition.get() ? `${saveTopPosition.get()}px` : "20vh";
+
+                this.style.top = watch(saveTopPosition) ? `${watch(saveTopPosition)}px` : "20vh";
                 this.style.transform = 'none';
                 break;
         }
@@ -308,6 +621,15 @@ class EdgeControls extends SignalWatcher(LitElement) {
 customElements.define('settings-panel', SettingsPanel);
 customElements.define('edge-controls', EdgeControls);
 export function initInjector() {
+    isInjectionEnabled.set(JSON.parse(localStorage.getItem('isInjectionEnabled') || "true"));
+    displayMode.set(Number.parseInt(localStorage.getItem('displayMode') || '1'));
+    activationMode.set(localStorage.getItem('activationMode') || 'all');
+    customStartFloor.set(Number.parseInt(localStorage.getItem('customStartFloor') || '1'));
+    customEndFloor.set(Number.parseInt(localStorage.getItem('customEndFloor') || '-1'));
+    savedPosition.set(localStorage.getItem('edgeControlsPosition') || 'top-right');
+    isEdgeControlsCollapsed.set(JSON.parse(localStorage.getItem('isEdgeControlsCollapsed') || "true"));
+    isVisibleSettingsPanel.set(JSON.parse(localStorage.getItem('isVisibleSettingsPanel') || "true"));
+    saveTopPosition.set(localStorage.getItem('saveTopPosition') || '');
     const settingsPanel = document.createElement('settings-panel') as SettingsPanel;
     const edgeControls = document.createElement('edge-controls') as EdgeControls;
     settingsPanel.id = 'html-injector-settings';
@@ -319,4 +641,11 @@ export function initInjector() {
     window.addEventListener("resize", () => {
         edgeControls.updatePosition();
     })
+    window.addEventListener('message', handleMessage);
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateAllIframesTheme);
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    })
+    // setInterval(checkLastMesTextChange, 2000);
 }
