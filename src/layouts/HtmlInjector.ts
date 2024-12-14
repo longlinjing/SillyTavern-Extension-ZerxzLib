@@ -24,6 +24,7 @@ const observer = new MutationObserver((mutations, _observer) => {
                     node.classList.contains('mes_text') ||
                     node.querySelector('.mes_text')
                 )) {
+                removeInjectedIframes();
                 if (isInjectionEnabled.get()) {
                     injectHtmlCode();
                 }
