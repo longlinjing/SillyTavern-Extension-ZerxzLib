@@ -19,7 +19,7 @@ export async function getSecrets() {
 
     if (response.status === 403) {
         callGenericPopup(
-            "<h3>禁止访问</h3><p>要在此处查看您的 API 密钥，请在 config.yaml 文件中将 allowKeysExposure 的值设置为 true，然后重新启动 SillyTavern 服务器。</p>",
+            "<h3>暂无权限访问</h3><p>要允许在此处明文查看您的 API 密钥，请在 config.yaml 文件中将 allowKeysExposure 的值设置为 true，然后重新启动 SillyTavern 服务器。</p>",
             POPUP_TYPE.TEXT
         );
         return;

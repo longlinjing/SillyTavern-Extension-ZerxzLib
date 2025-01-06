@@ -10,9 +10,9 @@
 /* 边缘控制面板样式 */
 #html-injector-edge-controls {
     position: fixed;
-    right: -80px;
+    right: 0;
     top: 20vh;
-    transition: right 0.3s ease-in-out;
+    transition: all 0.3s ease-in-out;
     background-color: var(--smart-theme-blur-tint);
     border: 1px solid var(--smart-theme-border-color);
     border-radius: 10px 0 0 10px;
@@ -24,6 +24,58 @@
     width: 100px;
     color: var(--smart-theme-body-color);
     backdrop-filter: blur(var(--smart-theme-blur-strength));
+    transform: translateX(0);
+}
+
+#html-injector-edge-controls.left-side {
+    right: auto;
+    left: 0;
+    border-radius: 0 10px 10px 0;
+}
+
+#html-injector-edge-controls.collapsed {
+    transform: translateX(100%);
+}
+
+#html-injector-edge-controls.left-side.collapsed {
+    transform: translateX(-100%);
+}
+
+#html-injector-edge-controls #toggle-edge-controls {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 60px;
+    background-color: var(--smart-theme-blur-tint);
+    color: var(--smart-theme-body-color);
+    border: 1px solid var(--smart-theme-border-color);
+    cursor: pointer;
+    padding: 5px;
+    user-select: none;
+    font-size: 12px;
+    text-align: center;
+    z-index: 1;
+    transition: all 0.3s ease-in-out;
+}
+
+/* 默认（右侧面板）的toggle按钮样式 */
+#html-injector-edge-controls:not(.left-side) #toggle-edge-controls {
+    left: -20px;
+    right: auto;
+    border-radius: 5px 0 0 5px;
+}
+
+/* 左侧面板的toggle按钮样式 */
+#html-injector-edge-controls.left-side #toggle-edge-controls {
+    left: auto;
+    right: -20px;
+    border-radius: 0 5px 5px 0;
+}
+
+/* 确保收起状态下按钮仍然可见 */
+#html-injector-edge-controls.collapsed #toggle-edge-controls {
+    transform: translateY(-50%);
 }
 /* 开关样式 */
 #html-injector-edge-controls .html-injector-switch {

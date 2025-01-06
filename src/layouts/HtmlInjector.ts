@@ -340,7 +340,11 @@ class SettingsPanel extends SignalWatcher(LitElement) {
                     <option value="top-right"            .selected=${savedPosition.get() === "top-right"}>界面右上角</option>
                     <option value="right-three-quarters" .selected=${savedPosition.get() === "right-three-quarters"}>界面右侧3/4位置</option>
                     <option value="right-middle"         .selected=${savedPosition.get() === "right-middle"}>界面右侧中间</option>
+                    <option value="top-left"             .selected=${savedPosition.get() === "top-left"}>界面左上角</option>
+                    <option value="left-three-quarters"  .selected=${savedPosition.get() === "left-three-quarters"}>界面左侧3/4位置</option>
+                    <option value="left-middle"          .selected=${savedPosition.get() === "left-middle"}>界面左侧中间</option>
                     <option value="custom"               .selected=${savedPosition.get() === "custom"}>自定义位置</option>
+                    <option value="hidden"               .selected=${savedPosition.get() === "hidden"}>隐藏</option>
                 </select>
                 </div>
                 <div class="settings-section">
@@ -406,6 +410,9 @@ class SettingsPanel extends SignalWatcher(LitElement) {
         const value = target.value;
         savedPosition.set(value);
         localStorage.setItem('edgeControlsPosition', value);
+        // 重置收起状态，确保面板可见
+        isEdgeControlsCollapsed.set(false);
+        localStorage.setItem('isEdgeControlsCollapsed', 'false');
         this.edgeControls.updateEdgeControlsPosition(value);
     }
     handleCustomStartFloorChange(event: Event) {
@@ -468,20 +475,31 @@ class EdgeControls extends SignalWatcher(LitElement) {
     public newTop: number
     constructor() {
         super();
+        const position = savedPosition.get();
+        const isLeft = position.includes('left');
         this.toggleEdgeButtonStyle = {
             position: 'absolute',
-            left: '-20px',
             top: '50%',
             transform: 'translateY(-50%)',
             backgroundColor: 'var(--SmartThemeBlurTintColor, rgba(22, 11, 18, 0.73))',
             color: 'var(--SmartThemeBodyColor, rgba(220, 220, 210, 1))',
             border: '1px solid var(--SmartThemeBorderColor, rgba(217, 90, 157, 0.5))',
-            borderRadius: '5px 0 0 5px',
             cursor: 'pointer',
             padding: '5px',
             userSelect: 'none',
             fontSize: '12px',
             height: '60px',
+            width: '20px',
+            textAlign: 'center',
+            ...(isLeft ? {
+                right: '-20px',
+                left: 'auto',
+                borderRadius: '0 5px 5px 0'
+            } : {
+                left: '-20px',
+                right: 'auto',
+                borderRadius: '5px 0 0 5px'
+            })
         }
         this.isDragging = false;
         this.startY = 0;
@@ -515,7 +533,15 @@ class EdgeControls extends SignalWatcher(LitElement) {
         console.log('render edge controls');
         console.log('isInjectionEnabled', isInjectionEnabled.get());
         console.log('isVisibleSettingsPanel', isVisibleSettingsPanel.get());
-        this.style.right = isEdgeControlsCollapsed.get() ? '-100px' : '0';
+        const position = savedPosition.get();
+        const isLeft = position.includes('left');
+        if (isLeft) {
+            this.style.left = isEdgeControlsCollapsed.get() ? '-100px' : '0';
+            this.style.right = 'auto';
+        } else {
+            this.style.right = isEdgeControlsCollapsed.get() ? '-100px' : '0';
+            this.style.left = 'auto';
+        }
         return html`
             <div id="html-injector-drag-handle" @mousedown=${this.handleDragStart} @touchstart=${this.handleDragStart}>
                 <div class="drag-dots">
@@ -573,7 +599,35 @@ class EdgeControls extends SignalWatcher(LitElement) {
     handleToggleEdgeControls(event: Event) {
         isEdgeControlsCollapsed.set(!isEdgeControlsCollapsed.get());
         const value = isEdgeControlsCollapsed.get();
-        this.style.right = value ? '-100px' : '0';
+        const position = savedPosition.get();
+        const isLeft = position.includes('left');
+
+        // 更新切换按钮文本和面板位置
+        const toggleButton = event.target as HTMLElement;
+        if (isLeft) {
+            this.style.left = value ? '-100px' : '0';
+            this.style.right = 'auto';
+            toggleButton.textContent = value ? '>>' : '<<';
+        } else {
+            this.style.right = value ? '-100px' : '0';
+            this.style.left = 'auto';
+            toggleButton.textContent = value ? '<<' : '>>';
+        }
+
+        // 更新按钮样式
+        this.toggleEdgeButtonStyle = {
+            ...this.toggleEdgeButtonStyle,
+            ...(isLeft ? {
+                right: '-20px',
+                left: 'auto',
+                borderRadius: '0 5px 5px 0'
+            } : {
+                left: '-20px',
+                right: 'auto',
+                borderRadius: '5px 0 0 5px'
+            })
+        };
+
         localStorage.setItem('isEdgeControlsCollapsed', value.toString());
     }
     handleToggleChange(event: Event) {
@@ -595,26 +649,69 @@ class EdgeControls extends SignalWatcher(LitElement) {
         this.updateEdgeControlsPosition(savedPosition.get());
     }
     updateEdgeControlsPosition(position: string) {
+        // 处理隐藏状态
+        if (position === 'hidden') {
+            this.style.display = 'none';
+            return;
+        }
+        this.style.display = 'block';
+
+        // 确定是左侧还是右侧
+        const isLeft = position.includes('left');
+
+        // 更新面板的样式类
+        if (isLeft) {
+            this.classList.add('left-side');
+        } else {
+            this.classList.remove('left-side');
+        }
+
+        // 设置垂直位置
         switch (position) {
             case 'top-right':
+            case 'top-left':
                 this.style.top = '20vh';
                 this.style.transform = 'none';
                 break;
             case 'right-three-quarters':
+            case 'left-three-quarters':
                 this.style.top = '75vh';
                 this.style.transform = 'none';
                 break;
             case 'right-middle':
+            case 'left-middle':
                 this.style.top = '50%';
                 this.style.transform = 'translateY(-50%)';
                 break;
             case 'custom':
-
                 this.style.top = watch(saveTopPosition) ? `${watch(saveTopPosition)}px` : "20vh";
                 this.style.transform = 'none';
                 break;
         }
-        this.style.right = isEdgeControlsCollapsed.get() ? '-100px' : '0';
+
+        // 设置水平位置
+        if (isLeft) {
+            this.style.left = isEdgeControlsCollapsed.get() ? '-100px' : '0';
+            this.style.right = 'auto';
+        } else {
+            this.style.right = isEdgeControlsCollapsed.get() ? '-100px' : '0';
+            this.style.left = 'auto';
+        }
+
+        // 更新切换按钮的样式
+        this.toggleEdgeButtonStyle = {
+            ...this.toggleEdgeButtonStyle,
+            ...(isLeft ? {
+                right: '-20px',
+                left: 'auto',
+                borderRadius: '0 5px 5px 0'
+            } : {
+                left: '-20px',
+                right: 'auto',
+                borderRadius: '5px 0 0 5px'
+            })
+        };
+        this.requestUpdate(); // 请求更新以应用新的样式
     }
 }
 
@@ -637,8 +734,18 @@ export function initInjector() {
     edgeControls.id = 'html-injector-edge-controls';
     settingsPanel.edgeControls = edgeControls;
     edgeControls.settingsPanel = settingsPanel;
+
+    // 根据保存的位置设置初始样式
+    const position = savedPosition.get();
+    if (position.includes('left')) {
+        edgeControls.classList.add('left-side');
+    }
+
     document.body.appendChild(settingsPanel);
     document.body.appendChild(edgeControls);
+
+    // 确保初始位置和样式正确
+    edgeControls.updateEdgeControlsPosition(position);
     window.addEventListener("resize", () => {
         edgeControls.updatePosition();
     })
