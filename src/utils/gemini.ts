@@ -1,10 +1,5 @@
-import { oai_settings } from "@silly-tavern/scripts/openai";
-import { callGenericPopup, POPUP_TYPE } from "@silly-tavern/scripts/popup";
-import {
-	secret_state,
-	updateSecretDisplay,
-	writeSecret,
-} from "@silly-tavern/scripts/secrets";
+import { oai_settings } from "@silly-tavern/scripts/openai.js";
+import { callGenericPopup, POPUP_TYPE } from "@silly-tavern/scripts/popup.js";
 import { saveKey } from "./utils";
 interface GeminiModel {
 	description: string;
@@ -133,8 +128,6 @@ export function throwGeminiError(text = "") {
 						</tr>
 					</tbody>
 				</table>
-
-				<h2>出现其它未知报错无法解决请在群内(433695739)提问</h2>
 			`, POPUP_TYPE.TEXT, "", {
 		large: true,
 		wide: true,

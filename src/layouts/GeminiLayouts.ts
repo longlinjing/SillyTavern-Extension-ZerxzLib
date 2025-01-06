@@ -3,7 +3,7 @@ import { repeat } from 'lit/directives/repeat.js';
 import { CUSTOM_KEY, getSecrets, initGeminiModels, saveKey, STATE, throwGeminiError, } from '../utils';
 import {
     writeSecret,
-} from "@silly-tavern/scripts/secrets";
+} from "@silly-tavern/scripts/secrets.js";
 interface GeminiLayoutsOption {
     currentKey: string;
     lastKey: string;

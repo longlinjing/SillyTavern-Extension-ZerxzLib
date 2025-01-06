@@ -1,18 +1,18 @@
 import {
 	eventSource,
 	event_types,
-} from "@silly-tavern/script";
+} from "@silly-tavern/script.js";
 import { getGeminiModel, getSecrets, isGeminiSource, saveKey, switchSecretsFromArray, throwGeminiError, STATE, CUSTOM_KEY, initGeminiModels, initToastr } from "./utils";
 
 import "./layouts/GeminiLayouts";
-import { initInjector } from "layouts/HtmlInjector";
+import { initInjector } from "./layouts/HtmlInjector";
 import type { GeminiLayouts } from "./layouts/GeminiLayouts";
-
+import { initContainer } from "layouts/ExtensionContainer";
 
 ; (async () => {
 	initToastr();
 	initInjector();
-
+	initContainer();
 	// 获取form元素 id为"makersuite_form"的元素 用jquery的选择器
 	const secrets = (await getSecrets()) ?? {};
 	await initGeminiModels(secrets);
