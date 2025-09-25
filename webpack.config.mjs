@@ -7,12 +7,7 @@ import * as url from 'node:url';
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const sillyTavernRoot = __dirname.substring(0, __dirname.indexOf(path.join('data', 'default-user', 'extensions')));
-const sillyTavern = path.join(sillyTavernRoot, 'public');
 const manifest = JSON.parse(fs.readFileSync('./manifest.json', 'utf8'));
-let { js: scriptFilepath } = manifest;
-scriptFilepath = path.dirname(path.join(__dirname, scriptFilepath));
-const relativePath = path.relative(scriptFilepath, sillyTavern);
 
 export default {
     experiments: {
@@ -124,26 +119,12 @@ export default {
     },
     externals: [
         ({ context, request }, callback) => {
-            let scriptPath = path.join(context, request);
-            const basenameDir = path.basename(__dirname);
             if (/^@silly-tavern/.test(request)) {
-                let script = (`${relativePath}\\${request.replace('@silly-tavern/', '')}`).replace(/\\/g, '/');
-                script = path.extname(script) === '.js' ? script : `${script}.js`;
+                // Resolve @silly-tavern imports to absolute paths from the web server root
+                const script = '/' + request.replace('@silly-tavern/', '');
                 return callback(null, script);
             }
-            if (!scriptPath.includes(basenameDir)) {
-                let isJs = path.extname(scriptPath) === '.js';
-                if (!isJs) {
-                    isJs = fs.existsSync(`${scriptPath}.js`);
-                    scriptPath = isJs ? `${scriptPath}.js` : scriptPath;
-                }
-                if (isJs) {
-                    const script = (relativePath + scriptPath.replace(sillyTavern, '')).replace(/\\/g, '/');
-                    return callback(null, script);
-                }
-            }
-            console.log('External: ', scriptPath);
-            console.log('External: ', request);
+            // Let webpack handle other requests
             callback();
         },
         /^(jquery|\$)$/i
