@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build:dev": "webpack --mode development",
-    "build": "webpack --mode production && node ./lib/copyFile.js",
+    "build": "webpack --mode production",
     "watch": "nodemon --exec npm run build --watch src --ext ts,tsx",
     "lint": "eslint .",
     "lint:fix": "eslint --fix ."
