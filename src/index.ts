@@ -33,5 +33,12 @@ import { initContainer } from "layouts/ExtensionContainer";
 	);
 	eventSource.on(event_types.CHATCOMPLETION_MODEL_CHANGED, async (model: string) => {
 		if (isGeminiSource()) await saveKey("api_key_makersuite_model", model);
-	})
+	});
+	eventSource.on(event_types.MESSAGE_SENT, () => {
+		if (isGeminiSource()) {
+			const currentCount = Number(localStorage.getItem("gemini_api_call_count") || 0);
+			localStorage.setItem("gemini_api_call_count", (currentCount + 1).toString());
+			window.dispatchEvent(new CustomEvent('gemini-api-call-updated'));
+		}
+	});
 })();

@@ -25,12 +25,14 @@ class GeminiLayouts extends LitElement {
         throwGeminiErrorState: { type: Boolean, reflect: true },
         switchKeyMakerSuite: { type: Boolean, reflect: true },
         apiKeys: { type: String, reflect: true },
+        apiCallCount: { type: Number, reflect: true },
     }
     declare currentKey: string;
     declare lastKey: string;
     declare throwGeminiErrorState: boolean;
     declare switchKeyMakerSuite: boolean;
     declare apiKeys: string;
+    declare apiCallCount: number;
     constructor() {
         super();
         this.currentKey = "";
@@ -38,6 +40,20 @@ class GeminiLayouts extends LitElement {
         this.throwGeminiErrorState = false;
         this.switchKeyMakerSuite = false;
         this.apiKeys = "";
+        this.apiCallCount = Number(localStorage.getItem("gemini_api_call_count") || 0);
+    }
+    connectedCallback() {
+        super.connectedCallback();
+        window.addEventListener('gemini-api-call-updated', this.updateApiCount.bind(this));
+    }
+
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        window.removeEventListener('gemini-api-call-updated', this.updateApiCount.bind(this));
+    }
+
+    updateApiCount() {
+        this.apiCallCount = Number(localStorage.getItem("gemini_api_call_count") || 0);
     }
     protected createRenderRoot(): HTMLElement | DocumentFragment {
         return this;
@@ -65,6 +81,10 @@ class GeminiLayouts extends LitElement {
             {
                 name: "报错开关",
                 handle: this.handleSwitchGeminiError
+            },
+            {
+                name: "清零计数",
+                handle: this.handleClearCount
             }
         ]
         return html`
@@ -74,6 +94,7 @@ class GeminiLayouts extends LitElement {
             <div id="last_key_maker_suite">最后: ${this.lastKey}</div>
             <div id="switch_key_maker_suite">密钥切换:${this.switchKeyMakerSuite ? "开" : "关"}</div>
             <div id="throw_gemini_error">报错开关:${this.throwGeminiErrorState ? "开" : "关"}</div>
+            <div id="gemini_api_call_count">API调用次数: ${this.apiCallCount}</div>
         </div>
         <div class="flex-container flex">
             <h4>Google AI Studio API 多个密钥</h4>
@@ -144,6 +165,10 @@ class GeminiLayouts extends LitElement {
         STATE.throwGeminiErrorState = !STATE.throwGeminiErrorState;
         localStorage.setItem("throw_gemini_error", STATE.throwGeminiErrorState.toString());
         this.throwGeminiErrorState = STATE.throwGeminiErrorState;
+    }
+    handleClearCount() {
+        this.apiCallCount = 0;
+        localStorage.setItem("gemini_api_call_count", "0");
     }
 }
 
