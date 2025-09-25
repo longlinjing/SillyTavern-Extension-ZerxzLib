@@ -7,7 +7,8 @@ import * as url from 'node:url';
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const sillyTavern = __dirname.substring(0, __dirname.lastIndexOf('public') + 6);
+const sillyTavernRoot = __dirname.substring(0, __dirname.indexOf(path.join('data', 'default-user', 'extensions')));
+const sillyTavern = path.join(sillyTavernRoot, 'public');
 const manifest = JSON.parse(fs.readFileSync('./manifest.json', 'utf8'));
 let { js: scriptFilepath } = manifest;
 scriptFilepath = path.dirname(path.join(__dirname, scriptFilepath));
